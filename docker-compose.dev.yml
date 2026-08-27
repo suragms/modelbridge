@@ -1,0 +1,68 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: modelbridge
+      POSTGRES_PASSWORD: modelbridge
+      POSTGRES_DB: modelbridge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: builder
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://modelbridge:modelbridge@postgres:5432/modelbridge
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: dev-secret-do-not-use-in-production
+      ENCRYPTION_KEY: change-me-generate-with-fernet-generate-key
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      CORS_ORIGINS: '["http://localhost:3000"]'
+      LOG_LEVEL: DEBUG
+    volumes:
+      - ./apps/api:/app
+    depends_on:
+      - postgres
+      - redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    volumes:
+      - ./apps/web/src:/app/src
+    depends_on:
+      - api
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    profiles:
+      - ollama
+
+volumes:
+  postgres_data:
+  ollama_data:
