@@ -22,6 +22,13 @@ class RequestLog(Base):
     error: Mapped[str | None] = mapped_column(Text)
     routing_strategy: Mapped[str | None] = mapped_column(String(50))
     fallback_used: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Routing decision metadata (no prompt content is ever stored).
+    requested_model: Mapped[str | None] = mapped_column(String(255))
+    routing_policy: Mapped[str | None] = mapped_column(String(255))
+    candidates_count: Mapped[int | None] = mapped_column(Integer)
+    fallback_count: Mapped[int | None] = mapped_column(Integer)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )

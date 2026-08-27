@@ -16,6 +16,11 @@ class RequestLogResponse(BaseModel):
     error: str | None
     routing_strategy: str | None
     fallback_used: bool
+    # Routing decision metadata (no prompt content is ever stored).
+    requested_model: str | None = None
+    routing_policy: str | None = None
+    candidates_count: int | None = None
+    fallback_count: int | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

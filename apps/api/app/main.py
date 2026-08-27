@@ -19,6 +19,7 @@ from app.api.routes import (
     logs_router,
     models_router,
     providers_router,
+    routing_router,
 )
 
 settings = get_settings()
@@ -85,6 +86,7 @@ app.include_router(chat_router)
 app.include_router(api_keys_router)
 app.include_router(logs_router)
 app.include_router(analytics_router)
+app.include_router(routing_router)
 
 
 async def _check_database() -> bool:

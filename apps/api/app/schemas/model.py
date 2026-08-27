@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
 from pydantic import BaseModel
 
@@ -20,6 +21,9 @@ class ModelResponse(BaseModel):
     is_enabled: bool
     quality_score: float
     provider_id: uuid.UUID
+    average_latency_ms: float | None = None
+    last_synced_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 

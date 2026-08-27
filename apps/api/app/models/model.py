@@ -26,8 +26,18 @@ class Model(Base):
     supports_json_mode: Mapped[bool] = mapped_column(Boolean, default=False)
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     quality_score: Mapped[float] = mapped_column(Float, default=0.5)
+
+    # Observed performance / sync metadata.
+    average_latency_ms: Mapped[float | None] = mapped_column(Float)
+    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     provider_id: Mapped[uuid.UUID] = mapped_column(
