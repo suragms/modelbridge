@@ -228,9 +228,9 @@ ModelBridge is **open source** under the [Apache License 2.0](LICENSE) — free 
 
 Stay updated with ModelBridge development:
 
-- **GitHub** — [@suragms](https://github.com/suragms)
-- **X (Twitter)** — [@suragms](https://x.com/suragms)
-- **LinkedIn** — [suragms](https://linkedin.com/in/suragms)
+- 💻 **GitHub** — [@suragms](https://github.com/suragms)
+- 💼 **LinkedIn** — [suragsunil](https://linkedin.com/in/suragsunil)
+- 📸 **Instagram** — [@surag_sunil](https://instagram.com/surag_sunil)
 
 ---
 

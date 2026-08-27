@@ -20,6 +20,11 @@ export interface Provider {
   status: ProviderStatus;
   is_enabled: boolean;
   config: Record<string, unknown> | null;
+  has_api_key: boolean;
+  last_health_check_at: string | null;
+  last_health_latency_ms: number | null;
+  total_health_checks: number;
+  failed_health_checks: number;
   created_at: string;
   updated_at: string;
 }
@@ -51,7 +56,7 @@ export interface ProviderTestResult {
 export interface DiscoveredModel {
   id: string;
   name: string;
-  status: "added" | "exists" | string;
+  status: "added" | "exists" | "updated" | "unavailable" | string;
 }
 
 export interface AIModel {
@@ -67,6 +72,12 @@ export interface AIModel {
   supports_vision: boolean;
   supports_json_mode: boolean;
   is_enabled: boolean;
+  quality_score: number;
+  input_price_per_1k: number;
+  output_price_per_1k: number;
+  average_latency_ms: number | null;
+  last_synced_at: string | null;
+  updated_at: string | null;
   status?: string;
   created_at: string;
 }
@@ -93,6 +104,12 @@ export interface RequestLog {
   latency_ms: number;
   status: "success" | "error" | string;
   error?: string | null;
+  routing_strategy?: string | null;
+  fallback_used: boolean;
+  requested_model?: string | null;
+  routing_policy?: string | null;
+  candidates_count?: number | null;
+  fallback_count?: number | null;
   created_at: string;
 }
 
@@ -131,4 +148,71 @@ export interface AnalyticsSummary {
   estimated_total_cost: number;
   success_rate: number;
   average_latency_ms: number;
+}
+
+// Routing types
+export type RoutingStrategy =
+  | "auto"
+  | "balanced"
+  | "priority"
+  | "cheapest"
+  | "fastest"
+  | "quality"
+  | "local_only"
+  | "privacy_first"
+  | "round_robin"
+  | "least_latency";
+
+export interface RoutingPolicy {
+  id: string;
+  name: string;
+  description: string | null;
+  strategy: RoutingStrategy;
+  is_default: boolean;
+  config: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface RoutingPolicyCreate {
+  name: string;
+  description?: string | null;
+  strategy: RoutingStrategy;
+  config?: Record<string, unknown> | null;
+  is_default?: boolean;
+}
+
+export interface RoutingPolicyUpdate {
+  name?: string;
+  description?: string | null;
+  strategy?: RoutingStrategy;
+  config?: Record<string, unknown> | null;
+  is_default?: boolean;
+}
+
+export interface RouteCandidate {
+  model_id: string;
+  model_name: string;
+  provider_name: string;
+  provider_type: string;
+  score: number;
+  latency_ms: number;
+  cost_per_1k: number;
+  is_local: boolean;
+}
+
+export interface RoutingTestRequest {
+  requested_model: string;
+  required_capabilities?: string[];
+  strategy?: RoutingStrategy;
+  policy_name?: string;
+}
+
+export interface RoutingTestResponse {
+  candidates: RouteCandidate[];
+  filtered: RouteCandidate[];
+  selected: RouteCandidate | null;
+  strategy: string;
+  reason: string;
+  fallback_order: string[];
 }
