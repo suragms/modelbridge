@@ -38,6 +38,17 @@ TOKENS_TOTAL = Counter(
     ["direction", "provider"],
 )
 
+CACHE_EVENTS = Counter(
+    "modelbridge_cache_events_total",
+    "Response cache events",
+    ["event", "endpoint"],
+)
+
+
+def record_cache_event(event: str, endpoint: str) -> None:
+    """Record cache hit/miss/write/bypass/error."""
+    CACHE_EVENTS.labels(event=event, endpoint=endpoint).inc()
+
 
 def record_request(
     status: str,

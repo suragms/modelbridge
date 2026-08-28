@@ -17,6 +17,7 @@ KNOWN_CAPABILITIES = frozenset({
     "json_mode",
     "structured_output",
     "reasoning",
+    "prompt_caching",
 })
 
 _CAPABILITY_COLUMNS = {
@@ -135,6 +136,15 @@ def _model_flag(model: Model, attr: str, default: bool = False) -> bool:
     return bool(value)
 
 
+def model_has_prompt_caching(model: Model) -> bool:
+    """Check ModelCapability rows or provider type for native prompt caching."""
+    for cap in model.capabilities or []:
+        if cap.name == "prompt_caching" and str(cap.value).lower() in ("true", "1", "yes"):
+            return True
+    provider_type = model.provider.type if model.provider else ""
+    return provider_type in {"anthropic", "openai"}
+
+
 def model_capability_map(model: Model) -> dict[str, bool]:
     return {
         "chat": _model_flag(model, "supports_chat", default=True),
@@ -146,6 +156,7 @@ def model_capability_map(model: Model) -> dict[str, bool]:
         "json_mode": _model_flag(model, "supports_json_mode"),
         "structured_output": _model_flag(model, "supports_structured_output"),
         "reasoning": _model_flag(model, "supports_reasoning"),
+        "prompt_caching": model_has_prompt_caching(model),
     }
 
 

@@ -39,6 +39,13 @@ from app.schemas.chat import (
 )
 from app.services.cost import CostService
 from app.services.metrics import record_request
+from app.services.response_cache import (
+    CachePolicy,
+    build_chat_cache_key,
+    get_response_cache,
+    is_chat_cacheable,
+    parse_cache_policy,
+)
 from app.services.routing import RouteService, RouteTarget
 from app.services.capabilities import collect_image_urls, detect_chat_capabilities
 from app.services.params import normalize_chat_params
@@ -146,6 +153,8 @@ async def chat_completions(
     )
     request.state.rate_limit_headers = rate_headers
 
+    cache_policy = parse_cache_policy(request.headers.get("X-ModelBridge-Cache-Policy"))
+
     if authenticated_key is not None:
         authenticated_key.last_used_at = datetime.now(UTC)
 
@@ -193,6 +202,33 @@ async def chat_completions(
             raise HTTPException(status_code=503, detail="No healthy providers available for auto routing")
         raise HTTPException(status_code=404, detail=f"Model '{payload.model}' not found or unavailable")
 
+    cache = get_response_cache()
+    cache_key: str | None = None
+    if not payload.stream and is_chat_cacheable(
+        stream=False,
+        tools=payload.tools,
+        tool_choice=payload.tool_choice,
+        policy=cache_policy,
+    ):
+        cache_key = build_chat_cache_key(
+            org_id=str(org_id) if org_id else None,
+            model=payload.model,
+            messages=payload.messages,
+            temperature=payload.temperature,
+            top_p=payload.top_p,
+            max_tokens=payload.max_tokens,
+            stop=payload.stop,
+            response_format=payload.response_format,
+        )
+        if cache_policy == CachePolicy.FORCE_CACHE:
+            cached = await cache.lookup(cache_key, endpoint="chat", policy=cache_policy)
+            if cached is None:
+                raise HTTPException(status_code=412, detail="Cache miss under FORCE_CACHE policy")
+        else:
+            cached = await cache.lookup(cache_key, endpoint="chat", policy=cache_policy)
+            if cached is not None:
+                return ChatCompletionResponse.model_validate(cached["response"])
+
     await usage_service.create_request(
         request_id=request_id,
         requested_model=plan.requested_model,
@@ -225,6 +261,8 @@ async def chat_completions(
     return await _execute_non_streaming(
         plan, messages, payload, request_id, user_id, api_key_id, org_id,
         db, usage_service, cost_service, start_time,
+        cache_key=cache_key,
+        cache_policy=cache_policy,
     )
 
 
@@ -240,6 +278,8 @@ async def _execute_non_streaming(
     usage_service: UsageService,
     cost_service: CostService,
     start_time: float,
+    cache_key: str | None = None,
+    cache_policy: CachePolicy = CachePolicy.DEFAULT,
 ) -> ChatCompletionResponse:
     registry = get_provider_registry()
     attempted: set[str] = set()
@@ -360,7 +400,7 @@ async def _execute_non_streaming(
                 finish_reason=choice_data.get("finish_reason", "stop"),
             ))
 
-        return ChatCompletionResponse(
+        response = ChatCompletionResponse(
             id=result.id,
             created=int(time.time()),
             model=target.resolved_model,
@@ -371,6 +411,27 @@ async def _execute_non_streaming(
                 total_tokens=prompt_tokens + completion_tokens,
             ),
         )
+
+        if cache_key and is_chat_cacheable(
+            stream=False,
+            tools=payload.tools,
+            tool_choice=payload.tool_choice,
+            policy=cache_policy,
+        ):
+            cache = get_response_cache()
+            await cache.store(
+                cache_key,
+                {
+                    "response": response.model_dump(),
+                    "request_id": request_id,
+                    "provider": target.provider.name,
+                    "model": target.resolved_model,
+                },
+                endpoint="chat",
+                policy=cache_policy,
+            )
+
+        return response
 
     latency = (time.time() - start_time) * 1000
     await usage_service.complete_request(

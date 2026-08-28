@@ -10,6 +10,7 @@ from app.models.user import User
 from app.schemas.chat import EmbeddingRequest, EmbeddingResponse
 from app.services.gateway import auth_context, execute_embeddings
 from app.services.gateway_guard import enforce_gateway_guards
+from app.services.response_cache import parse_cache_policy
 
 router = APIRouter(tags=["OpenAI-Compatible"])
 
@@ -37,4 +38,5 @@ async def create_embeddings(
         input_text=combined,
     )
     request.state.rate_limit_headers = rate_headers
-    return await execute_embeddings(payload, db, user, api_key)
+    cache_policy = parse_cache_policy(request.headers.get("X-ModelBridge-Cache-Policy"))
+    return await execute_embeddings(payload, db, user, api_key, cache_policy=cache_policy)

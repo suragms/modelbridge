@@ -41,6 +41,15 @@ from app.services.capabilities import (
 from app.services.cost import CostService
 from app.services.metrics import record_request
 from app.services.params import normalize_chat_params
+from app.services.response_cache import (
+    CachePolicy,
+    build_chat_cache_key,
+    build_embedding_cache_key,
+    get_response_cache,
+    is_chat_cacheable,
+    is_embedding_cacheable,
+    parse_cache_policy,
+)
 from app.services.routing import RouteService, RouteTarget
 from app.services.token_estimator import estimate_message_tokens
 from app.services.tool_calls import normalize_message_tool_calls
@@ -173,10 +182,12 @@ async def execute_chat(
     db: AsyncSession,
     user: User | None,
     api_key: APIKey | None,
+    cache_policy: CachePolicy | str | None = None,
 ) -> GatewayResult:
     user_id, api_key_id, org_id = auth_context(user, api_key)
     request_id = generate_request_id()
     start_time = time.time()
+    policy = cache_policy if isinstance(cache_policy, CachePolicy) else parse_cache_policy(cache_policy)
 
     required = detect_chat_capabilities(
         payload.messages,
@@ -189,11 +200,11 @@ async def execute_chat(
     caps_str = ",".join(sorted(required))
 
     route_service = RouteService(db)
-    policy = await route_service.get_active_policy(strategy=None)
+    routing_policy = await route_service.get_active_policy(strategy=None)
     plan = await route_service.plan(
         requested_model=payload.model,
         required_capabilities=required,
-        policy=policy,
+        policy=routing_policy,
         strategy=None,
         request_count=None,
         org_id=org_id,
@@ -204,6 +215,44 @@ async def execute_chat(
 
     usage_service = UsageService(db)
     cost_service = CostService(db)
+
+    cache = get_response_cache()
+    cache_key: str | None = None
+    if is_chat_cacheable(
+        stream=payload.stream,
+        tools=payload.tools,
+        tool_choice=payload.tool_choice,
+        policy=policy,
+    ):
+        cache_key = build_chat_cache_key(
+            org_id=str(org_id) if org_id else None,
+            model=payload.model,
+            messages=payload.messages,
+            temperature=payload.temperature,
+            top_p=payload.top_p,
+            max_tokens=payload.max_tokens,
+            stop=payload.stop,
+            response_format=payload.response_format,
+        )
+        if policy == CachePolicy.FORCE_CACHE:
+            cached = await cache.lookup(cache_key, endpoint="chat", policy=policy)
+            if cached is None:
+                raise HTTPException(status_code=412, detail="Cache miss under FORCE_CACHE policy")
+        else:
+            cached = await cache.lookup(cache_key, endpoint="chat", policy=policy)
+            if cached is not None:
+                response = ChatCompletionResponse.model_validate(cached["response"])
+                return GatewayResult(
+                    response=response,
+                    request_id=cached.get("request_id", request_id),
+                    provider=cached.get("provider", "cache"),
+                    selected_model=cached.get("model", response.model),
+                    strategy=plan.strategy,
+                    routing_policy=plan.policy_name,
+                    required_capabilities=sorted(required),
+                    latency_ms=(time.time() - start_time) * 1000,
+                )
+
     await usage_service.create_request(
         request_id=request_id,
         requested_model=plan.requested_model,
@@ -221,6 +270,26 @@ async def execute_chat(
         plan, messages, payload, request_id, user_id, api_key_id, org_id,
         usage_service, cost_service, start_time, required, caps_str,
     )
+
+    if cache_key and is_chat_cacheable(
+        stream=False,
+        tools=payload.tools,
+        tool_choice=payload.tool_choice,
+        policy=policy,
+    ):
+        target = plan.targets[0]
+        await cache.store(
+            cache_key,
+            {
+                "response": response.model_dump(),
+                "request_id": request_id,
+                "provider": target.provider.name,
+                "model": target.resolved_model,
+            },
+            endpoint="chat",
+            policy=policy,
+        )
+
     latency = (time.time() - start_time) * 1000
     target = plan.targets[0]
     cost_rec = await usage_service.get_cost_for_request(request_id)
@@ -389,10 +458,12 @@ async def execute_embeddings(
     db: AsyncSession,
     user: User | None,
     api_key: APIKey | None,
+    cache_policy: CachePolicy | str | None = None,
 ) -> EmbeddingResponse:
     user_id, api_key_id, org_id = auth_context(user, api_key)
     request_id = generate_request_id()
     start_time = time.time()
+    policy = cache_policy if isinstance(cache_policy, CachePolicy) else parse_cache_policy(cache_policy)
     required = {"embeddings"}
     caps_str = "embeddings"
 
@@ -400,12 +471,30 @@ async def execute_embeddings(
     if not inputs:
         raise HTTPException(status_code=400, detail="At least one input is required")
 
+    cache = get_response_cache()
+    cache_key: str | None = None
+    if is_embedding_cacheable(policy=policy):
+        cache_key = build_embedding_cache_key(
+            org_id=str(org_id) if org_id else None,
+            model=payload.model,
+            inputs=[str(i) for i in inputs],
+            encoding_format=payload.encoding_format,
+        )
+        if policy == CachePolicy.FORCE_CACHE:
+            cached = await cache.lookup(cache_key, endpoint="embeddings", policy=policy)
+            if cached is None:
+                raise HTTPException(status_code=412, detail="Cache miss under FORCE_CACHE policy")
+        else:
+            cached = await cache.lookup(cache_key, endpoint="embeddings", policy=policy)
+            if cached is not None:
+                return EmbeddingResponse.model_validate(cached["response"])
+
     route_service = RouteService(db)
-    policy = await route_service.get_active_policy(strategy=None)
+    routing_policy = await route_service.get_active_policy(strategy=None)
     plan = await route_service.plan(
         requested_model=payload.model,
         required_capabilities=required,
-        policy=policy,
+        policy=routing_policy,
         strategy=None,
         org_id=org_id,
     )
@@ -492,7 +581,7 @@ async def execute_embeddings(
         input_tokens=prompt_tokens,
     )
 
-    return EmbeddingResponse(
+    response = EmbeddingResponse(
         data=[
             EmbeddingData(embedding=emb, index=i)
             for i, emb in enumerate(result.embeddings)
@@ -504,3 +593,13 @@ async def execute_embeddings(
             total_tokens=prompt_tokens,
         ),
     )
+
+    if cache_key and is_embedding_cacheable(policy=policy):
+        await cache.store(
+            cache_key,
+            {"response": response.model_dump()},
+            endpoint="embeddings",
+            policy=policy,
+        )
+
+    return response
