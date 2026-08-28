@@ -13,6 +13,8 @@ from app.providers.base import (
     ProviderModel,
     StreamChunk,
 )
+from app.providers.capabilities import infer_capabilities
+from app.services.tool_calls import normalize_message_tool_calls
 
 
 class OpenAIProvider(AIProvider):
@@ -107,14 +109,16 @@ class OpenAIProvider(AIProvider):
 
             choices = []
             for choice in data.get("choices", []):
-                msg = choice.get("message", {})
+                msg = normalize_message_tool_calls(choice.get("message", {}))
+                message = {
+                    "role": msg.get("role", "assistant"),
+                    "content": msg.get("content"),
+                }
+                if msg.get("tool_calls"):
+                    message["tool_calls"] = msg["tool_calls"]
                 choices.append({
                     "index": choice.get("index", 0),
-                    "message": {
-                        "role": msg.get("role", "assistant"),
-                        "content": msg.get("content", ""),
-                        **({"tool_calls": msg["tool_calls"]} if msg.get("tool_calls") else {}),
-                    },
+                    "message": message,
                     "finish_reason": choice.get("finish_reason", "stop"),
                 })
 
@@ -173,18 +177,18 @@ class OpenAIProvider(AIProvider):
                     for choice in choices:
                         delta = choice.get("delta", {})
                         content = delta.get("content", "")
+                        chunk_delta: dict = {}
+                        if delta.get("role"):
+                            chunk_delta["role"] = delta["role"]
                         if content:
+                            chunk_delta["content"] = content
+                        if delta.get("tool_calls"):
+                            chunk_delta["tool_calls"] = delta["tool_calls"]
+                        if chunk_delta or choice.get("finish_reason"):
                             yield StreamChunk(
                                 id=data.get("id", ""),
                                 model=data.get("model", model),
-                                delta={"role": "assistant", "content": content},
-                                finish_reason=choice.get("finish_reason"),
-                            )
-                        elif choice.get("finish_reason"):
-                            yield StreamChunk(
-                                id=data.get("id", ""),
-                                model=data.get("model", model),
-                                delta={},
+                                delta=chunk_delta,
                                 finish_reason=choice.get("finish_reason"),
                             )
 
@@ -200,15 +204,23 @@ class OpenAIProvider(AIProvider):
 
                 models = []
                 for model in data.get("data", []):
+                    mid = model.get("id", "")
+                    inferred = infer_capabilities(mid, self.provider_type)
                     models.append(ProviderModel(
-                        id=model.get("id", ""),
-                        name=model.get("id", ""),
-                        context_window=4096,
-                        supports_streaming=True,
-                        supports_tools=True,
-                        supports_embeddings="embed" in model.get("id", "").lower(),
-                        supports_vision="vision" in model.get("id", "").lower() or "gpt-4" in model.get("id", "").lower(),
-                        supports_json_mode=True,
+                        id=mid,
+                        name=mid,
+                        context_window=inferred.context_window,
+                        supports_chat=inferred.supports_chat,
+                        supports_streaming=inferred.supports_streaming,
+                        supports_tools=inferred.supports_tools,
+                        supports_embeddings=inferred.supports_embeddings,
+                        supports_vision=inferred.supports_vision,
+                        supports_json_mode=inferred.supports_json_mode,
+                        supports_structured_output=inferred.supports_structured_output,
+                        supports_tool_choice=inferred.supports_tool_choice,
+                        supports_reasoning=inferred.supports_reasoning,
+                        embedding_dimensions=inferred.embedding_dimensions,
+                        max_output_tokens=inferred.max_output_tokens,
                     ))
                 return models
             except Exception:

@@ -4,9 +4,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
+  BarChart3,
   Boxes,
-  LayoutDashboard,
+  FlaskConical,
+  GitBranch,
   KeyRound,
+  LayoutDashboard,
   LogOut,
   Server,
   Settings as SettingsIcon,
@@ -14,13 +17,17 @@ import {
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { OrgSwitcher } from "@/components/org-switcher";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/playground", label: "Playground", icon: FlaskConical },
   { href: "/providers", label: "Providers", icon: Server },
   { href: "/models", label: "Models", icon: Boxes },
+  { href: "/routing", label: "Routing", icon: GitBranch },
   { href: "/api-keys", label: "API Keys", icon: KeyRound },
   { href: "/requests", label: "Requests", icon: Activity },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
@@ -67,6 +74,9 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-[var(--border)] p-3">
+        <div className="mb-2 px-3">
+          <OrgSwitcher />
+        </div>
         <div className="mb-2 px-3 text-xs text-[var(--muted-foreground)]">
           {user?.email}
         </div>

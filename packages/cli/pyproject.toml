@@ -1,0 +1,22 @@
+[project]
+name = "modelbridge-cli"
+version = "1.0.0"
+description = "Official CLI for ModelBridge AI Gateway"
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.15.0",
+    "httpx>=0.28.0",
+    "rich>=13.9.0",
+]
+
+[project.scripts]
+modelbridge = "modelbridge_cli.main:app"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3.0", "respx>=0.21.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

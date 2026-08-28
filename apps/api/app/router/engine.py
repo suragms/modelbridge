@@ -7,21 +7,11 @@ The engine is provider-agnostic: it works entirely on the ``Model`` /
 
 from __future__ import annotations
 
-import random
 from dataclasses import dataclass, field
 
 from app.models.model import Model
 from app.models.provider import Provider, ProviderStatus
-
-# Capability keywords map to Model boolean columns.
-_CAPABILITY_COLUMNS = {
-    "chat": None,  # every model is assumed chat-capable
-    "streaming": "supports_streaming",
-    "tools": "supports_tools",
-    "vision": "supports_vision",
-    "embeddings": "supports_embeddings",
-    "json_mode": "supports_json_mode",
-}
+from app.services.capabilities import filter_reason, missing_capabilities
 
 _LOCAL_PROVIDER_TYPES = {"ollama", "lmstudio"}
 
@@ -111,13 +101,11 @@ class RoutingEngine:
     @staticmethod
     def model_satisfies(model: Model, required: set[str]) -> bool:
         """Return True when ``model`` supports every required capability."""
-        for cap in required:
-            column = _CAPABILITY_COLUMNS.get(cap)
-            if column is None:
-                continue  # "chat" is assumed for all models
-            if not getattr(model, column, False):
-                return False
-        return True
+        return not missing_capabilities(model, required)
+
+    @staticmethod
+    def explain_filter(model: Model, provider: Provider | None, required: set[str]) -> str | None:
+        return filter_reason(model, provider, required)
 
     @classmethod
     def _satisfies_capabilities(cls, model, required):
@@ -232,9 +220,15 @@ class RoutingEngine:
         self, candidates: list[CandidateModel], config: dict, request_count: int | None = None
     ) -> list[CandidateModel]:
         priority_order = config.get("priority_model_ids", config.get("priority", []))
-        priority_map = {mid: i for i, mid in enumerate(priority_order)}
+        # A priority list may reference models by internal id or by their
+        # provider model name; both are honored.
+        priority_map: dict[str, int] = {}
+        for i, mid in enumerate(priority_order):
+            priority_map.setdefault(str(mid), i)
         for c in candidates:
             idx = priority_map.get(str(c.model.id))
+            if idx is None:
+                idx = priority_map.get(str(c.model.provider_model_id))
             if idx is None:
                 # Models not in the list sort below any configured model.
                 idx = len(priority_order)

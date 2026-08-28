@@ -1,0 +1,209 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: modelbridge
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: modelbridge-config
+  namespace: modelbridge
+data:
+  ENVIRONMENT: "production"
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  CORS_ORIGINS: "https://modelbridge.example.com"
+  LOG_LEVEL: "INFO"
+  REQUEST_LOG_RETENTION_DAYS: "30"
+  AUDIT_LOG_RETENTION_DAYS: "180"
+  HEALTH_CHECK_INTERVAL_MINUTES: "5"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: modelbridge-secrets
+  namespace: modelbridge
+type: Opaque
+stringData:
+  DATABASE_URL: "postgresql+asyncpg://USER:PASSWORD@postgres:5432/modelbridge"
+  REDIS_URL: "redis://redis:6379/0"
+  JWT_SECRET: "REPLACE_WITH_SECURE_SECRET"
+  ENCRYPTION_KEY: "REPLACE_WITH_FERNET_KEY"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: modelbridge-api
+  namespace: modelbridge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: modelbridge-api
+  template:
+    metadata:
+      labels:
+        app: modelbridge-api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: api
+          image: modelbridge-api:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: modelbridge-config
+            - secretRef:
+                name: modelbridge-secrets
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: modelbridge-worker
+  namespace: modelbridge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: modelbridge-worker
+  template:
+    metadata:
+      labels:
+        app: modelbridge-worker
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: worker
+          image: modelbridge-api:latest
+          command: ["arq", "app.jobs.worker.WorkerSettings"]
+          envFrom:
+            - configMapRef:
+                name: modelbridge-config
+            - secretRef:
+                name: modelbridge-secrets
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: modelbridge-web
+  namespace: modelbridge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: modelbridge-web
+  template:
+    metadata:
+      labels:
+        app: modelbridge-web
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: web
+          image: modelbridge-web:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_API_URL
+              value: "https://api.modelbridge.example.com"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: modelbridge-api
+  namespace: modelbridge
+spec:
+  selector:
+    app: modelbridge-api
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: modelbridge-web
+  namespace: modelbridge
+spec:
+  selector:
+    app: modelbridge-web
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: modelbridge-api-hpa
+  namespace: modelbridge
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: modelbridge-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: modelbridge-ingress
+  namespace: modelbridge
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: modelbridge.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: modelbridge-web
+                port:
+                  number: 80
+    - host: api.modelbridge.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: modelbridge-api
+                port:
+                  number: 8000

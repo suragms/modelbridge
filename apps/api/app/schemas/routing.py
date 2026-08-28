@@ -52,11 +52,23 @@ class RouteCandidate(BaseModel):
     latency_ms: float
     cost_per_1k: float
     is_local: bool
+    eligible: bool = True
+    filter_reason: str | None = None
+
+
+class RoutingDebugEntry(BaseModel):
+    model_id: uuid.UUID
+    model_name: str
+    provider_name: str
+    eligible: bool
+    filter_reason: str | None = None
 
 
 class RoutingTestResponse(BaseModel):
     candidates: list[RouteCandidate]
     filtered: list[RouteCandidate]
+    debug: list[RoutingDebugEntry] = []
+    requested_capabilities: list[str] = []
     selected: RouteCandidate | None
     strategy: str
     reason: str

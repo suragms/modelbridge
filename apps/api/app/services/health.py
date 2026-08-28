@@ -15,7 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.health import HealthCheck
 from app.models.provider import Provider, ProviderStatus
-from app.providers.base import AIProvider
 from app.providers.registry import get_provider_registry
 
 # Number of recent checks used to compute a rolling success rate.

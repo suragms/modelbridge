@@ -125,6 +125,9 @@ async def get_api_key_or_user(
     if not api_key:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
+    if api_key.expires_at and api_key.expires_at < datetime.now(UTC):
+        raise HTTPException(status_code=401, detail="API key expired")
+
     user = await db.get(User, api_key.user_id)
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="User not found or inactive")

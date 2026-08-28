@@ -33,8 +33,8 @@ import {
 import {
   useCreateProvider,
   useDeleteProvider,
-  useDiscoverModels,
   useProviders,
+  useSyncModels,
   useTestProvider,
   useUpdateProvider,
 } from "@/lib/hooks";
@@ -68,7 +68,7 @@ export default function ProvidersPage() {
   const updateProvider = useUpdateProvider();
   const deleteProvider = useDeleteProvider();
   const testProvider = useTestProvider();
-  const discoverModels = useDiscoverModels(discoverFor?.id ?? null);
+  const syncModels = useSyncModels();
 
   const providers = providersQuery.data ?? [];
 
@@ -113,10 +113,10 @@ export default function ProvidersPage() {
     setDiscoverError("");
     setDiscovered([]);
     try {
-      const result = await discoverModels.mutateAsync();
+      const result = await syncModels.mutateAsync(discoverFor.id);
       setDiscovered(result);
     } catch (err) {
-      setDiscoverError(err instanceof Error ? err.message : "Discovery failed");
+      setDiscoverError(err instanceof Error ? err.message : "Sync failed");
     } finally {
       setDiscoverLoading(false);
     }
@@ -164,8 +164,11 @@ export default function ProvidersPage() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Type</TableHead>
-                  <TableHead>Base URL</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>API Key</TableHead>
+                  <TableHead>Last Check</TableHead>
+                  <TableHead className="text-right">Avg Latency</TableHead>
+                  <TableHead className="text-center">Enabled</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -176,11 +179,27 @@ export default function ProvidersPage() {
                     <TableCell>
                       <Badge variant="secondary">{p.type}</Badge>
                     </TableCell>
-                    <TableCell className="max-w-[240px] truncate text-[var(--muted-foreground)]">
-                      {p.base_url ?? "—"}
-                    </TableCell>
                     <TableCell>
                       <Badge variant={statusVariant(p.status)}>{p.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-[var(--muted-foreground)]">
+                      {/* Never render the secret — only a masked placeholder. */}
+                      {p.has_api_key ? "••••••••" : "—"}
+                    </TableCell>
+                    <TableCell className="text-[var(--muted-foreground)]">
+                      {p.last_health_check_at
+                        ? new Date(p.last_health_check_at).toLocaleString()
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {p.last_health_latency_ms != null
+                        ? `${Math.round(p.last_health_latency_ms)}ms`
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant={p.is_enabled ? "success" : "secondary"}>
+                        {p.is_enabled ? "yes" : "no"}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
@@ -213,7 +232,7 @@ export default function ProvidersPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          title="Discover models"
+                          title="Sync models"
                           onClick={() => setDiscoverFor(p)}
                         >
                           <Boxes className="h-4 w-4" />
@@ -263,30 +282,39 @@ export default function ProvidersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Discover models dialog */}
+      {/* Sync models dialog */}
       <Dialog open={Boolean(discoverFor)} onOpenChange={(o) => !o && setDiscoverFor(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Discover Models</DialogTitle>
+            <DialogTitle>Sync Models</DialogTitle>
             <DialogDescription>
-              {discoverFor?.name} — fetch available models from this provider.
+              {discoverFor?.name} — sync the model registry from this provider
+              (adds new, updates known, marks removed models unavailable).
             </DialogDescription>
           </DialogHeader>
           <DialogBody>
             {discoverLoading ? (
-              <p className="py-4 text-[var(--muted-foreground)]">Discovering…</p>
+              <p className="py-4 text-[var(--muted-foreground)]">Syncing…</p>
             ) : discoverError ? (
               <p className="text-sm text-red-600">{discoverError}</p>
             ) : discovered.length === 0 && !discoverLoading ? (
               <p className="py-4 text-[var(--muted-foreground)]">
-                No models discovered yet. Run discovery to sync models.
+                No models synced yet. Run sync to sync models.
               </p>
             ) : (
               <ul className="space-y-1 text-sm">
                 {discovered.map((m) => (
                   <li key={m.id} className="flex items-center justify-between">
                     <span>{m.name}</span>
-                    <Badge variant={m.status === "added" ? "success" : "secondary"}>
+                    <Badge
+                      variant={
+                        m.status === "added"
+                          ? "success"
+                          : m.status === "unavailable"
+                          ? "warning"
+                          : "secondary"
+                      }
+                    >
                       {m.status}
                     </Badge>
                   </li>
@@ -295,7 +323,7 @@ export default function ProvidersPage() {
             )}
             <div className="mt-4 flex justify-end">
               <Button onClick={handleDiscover} disabled={discoverLoading}>
-                {discoverLoading ? "Discovering…" : "Run discovery"}
+                {discoverLoading ? "Syncing…" : "Run sync"}
               </Button>
             </div>
           </DialogBody>

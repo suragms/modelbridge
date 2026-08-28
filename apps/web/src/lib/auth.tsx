@@ -15,14 +15,18 @@ import type { TokenResponse, User } from "./types";
 
 const TOKEN_KEY = "mb_token";
 const USER_KEY = "mb_user";
+const ORG_KEY = "mb_org_id";
 
 interface AuthContextValue {
   token: string | null;
   user: User | null;
+  activeOrgId: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName?: string) => Promise<void>;
   logout: () => void;
+  setActiveOrgId: (orgId: string | null) => void;
+  switchOrganization: (orgId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -39,6 +43,7 @@ function readStoredUser(): User | null {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [activeOrgId, setActiveOrgIdState] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,13 +51,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (storedToken) {
       setToken(storedToken);
       setUser(readStoredUser());
+      setActiveOrgIdState(localStorage.getItem(ORG_KEY));
     }
     setLoading(false);
+  }, []);
+
+  const setActiveOrgId = useCallback((orgId: string | null) => {
+    if (orgId) localStorage.setItem(ORG_KEY, orgId);
+    else localStorage.removeItem(ORG_KEY);
+    setActiveOrgIdState(orgId);
   }, []);
 
   const persist = useCallback((t: TokenResponse) => {
     localStorage.setItem(TOKEN_KEY, t.access_token);
     localStorage.setItem(USER_KEY, JSON.stringify(t.user));
+    if (t.user.organization_id) {
+      localStorage.setItem(ORG_KEY, t.user.organization_id);
+      setActiveOrgIdState(t.user.organization_id);
+    }
     setToken(t.access_token);
     setUser(t.user);
   }, []);
@@ -80,13 +96,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(ORG_KEY);
     setToken(null);
     setUser(null);
+    setActiveOrgIdState(null);
   }, []);
 
+  const switchOrganization = useCallback(
+    async (orgId: string) => {
+      const data = await api.post<TokenResponse>(
+        `/organizations/current/switch?organization_id=${orgId}`,
+        undefined,
+        token ?? undefined
+      );
+      persist(data);
+    },
+    [token, persist]
+  );
+
   const value = useMemo(
-    () => ({ token, user, loading, login, register, logout }),
-    [token, user, loading, login, register, logout]
+    () => ({
+      token,
+      user,
+      activeOrgId,
+      loading,
+      login,
+      register,
+      logout,
+      setActiveOrgId,
+      switchOrganization,
+    }),
+    [token, user, activeOrgId, loading, login, register, logout, setActiveOrgId, switchOrganization]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

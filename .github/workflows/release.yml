@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  validate-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: modelbridge
+          POSTGRES_PASSWORD: modelbridge
+          POSTGRES_DB: modelbridge
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install and test API
+        env:
+          DATABASE_URL: postgresql+asyncpg://modelbridge:modelbridge@localhost:5432/modelbridge
+          REDIS_URL: redis://localhost:6379/0
+          JWT_SECRET: test-secret
+          ENCRYPTION_KEY: test-key
+        run: |
+          cd apps/api && pip install -e ".[dev]" && pytest tests/ -q
+
+      - name: Test CLI
+        run: |
+          pip install -e packages/cli
+          pip install pytest
+          pytest packages/cli/tests/ -q
+
+      - name: Test Python SDK
+        run: |
+          pip install -e packages/python-sdk respx pytest
+          pytest packages/python-sdk/tests/ -q
+
+  build-release:
+    needs: validate-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: |
+          docker build -f apps/api/Dockerfile -t modelbridge-api:${{ github.ref_name }} .
+          docker build -f apps/web/Dockerfile -t modelbridge-web:${{ github.ref_name }} .
+
+      - name: Generate release notes
+        run: |
+          VERSION="${{ github.ref_name }}"
+          echo "## ModelBridge ${VERSION}" > release-notes.md
+          echo "" >> release-notes.md
+          sed -n '/^## \[/,$p' CHANGELOG.md | head -40 >> release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release-notes.md
+          generate_release_notes: true

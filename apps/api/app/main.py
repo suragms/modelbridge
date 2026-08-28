@@ -1,37 +1,59 @@
 import time
 import uuid
+from contextlib import asynccontextmanager
 
 import redis.asyncio as aioredis
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy import text
-
-from app.db.base import engine
-from app.config import get_settings
 
 from app.api.routes import (
     analytics_router,
     api_keys_router,
+    audit_router,
     auth_router,
     chat_router,
+    embeddings_router,
     logs_router,
     models_router,
+    organizations_router,
+    playground_router,
     providers_router,
     routing_router,
 )
+from app.config import get_settings, validate_production_settings
+from app.db.base import engine
+from app.services.metrics import metrics_response
+from app.services.redis_client import close_redis
 
 settings = get_settings()
 logger = structlog.get_logger()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    errors = validate_production_settings()
+    if errors and settings.environment == "production":
+        for err in errors:
+            logger.error("config_validation_failed", error=err)
+        raise RuntimeError("Invalid production configuration: " + "; ".join(errors))
+    if errors:
+        for err in errors:
+            logger.warning("config_validation_warning", error=err)
+    yield
+    await close_redis()
+
+
 app = FastAPI(
     title="ModelBridge",
     description="One API for every AI model. An open-source AI gateway and intelligent model router.",
-    version="0.1.0",
+    version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -44,12 +66,36 @@ app.add_middleware(
 
 
 @app.middleware("http")
-async def request_logging_middleware(request: Request, call_next):
-    request_id = str(uuid.uuid4())
-    start = time.time()
+async def security_and_limits_middleware(request: Request, call_next):
+    if request.method in {"POST", "PUT", "PATCH"}:
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > settings.max_request_body_bytes:
+            return JSONResponse(
+                status_code=413,
+                content={
+                    "error": {
+                        "type": "payload_too_large",
+                        "message": f"Request body exceeds {settings.max_request_body_bytes} bytes",
+                        "code": "PAYLOAD_TOO_LARGE",
+                    }
+                },
+            )
 
+    request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    start = time.time()
     response = await call_next(request)
     duration = (time.time() - start) * 1000
+
+    response.headers["X-Request-ID"] = request_id
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+
+    rate_headers = getattr(request.state, "rate_limit_headers", None)
+    if rate_headers:
+        for key, value in rate_headers.items():
+            response.headers[key] = value
 
     logger.info(
         "request",
@@ -59,7 +105,6 @@ async def request_logging_middleware(request: Request, call_next):
         duration_ms=round(duration, 2),
         request_id=request_id,
     )
-    response.headers["X-Request-ID"] = request_id
     return response
 
 
@@ -78,19 +123,21 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Include routers
 app.include_router(auth_router)
+app.include_router(organizations_router)
 app.include_router(providers_router)
 app.include_router(models_router)
 app.include_router(chat_router)
+app.include_router(embeddings_router)
+app.include_router(playground_router)
 app.include_router(api_keys_router)
 app.include_router(logs_router)
 app.include_router(analytics_router)
 app.include_router(routing_router)
+app.include_router(audit_router)
 
 
 async def _check_database() -> bool:
-    """Return True if the database is reachable."""
     try:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
@@ -100,7 +147,6 @@ async def _check_database() -> bool:
 
 
 async def _check_redis() -> bool:
-    """Return True if Redis is reachable."""
     try:
         client = aioredis.from_url(settings.redis_url, socket_timeout=2)
         await client.ping()
@@ -112,37 +158,43 @@ async def _check_redis() -> bool:
 
 @app.get("/health")
 async def health():
-    """Liveness probe. Returns 200 when the process is running."""
-    return {"status": "healthy", "version": "0.1.0"}
+    db_ok = await _check_database()
+    redis_ok = await _check_redis()
+    checks = {
+        "database": "healthy" if db_ok else "unhealthy",
+        "redis": "healthy" if redis_ok else "unhealthy",
+    }
+    if db_ok and redis_ok:
+        status = "healthy"
+    elif db_ok or redis_ok:
+        status = "degraded"
+    else:
+        status = "unhealthy"
+    return {"status": status, "version": "1.0.0", "checks": checks}
 
 
 @app.get("/ready")
 async def readiness():
-    """Readiness probe. Checks that critical dependencies are reachable.
-
-    Returns 200 only when both the database and Redis are available.
-    """
     db_ok = await _check_database()
     redis_ok = await _check_redis()
-
-    checks = {
-        "database": "ok" if db_ok else "error",
-        "redis": "ok" if redis_ok else "error",
-    }
-
+    checks = {"database": "ok" if db_ok else "error", "redis": "ok" if redis_ok else "error"}
     if db_ok and redis_ok:
         return {"status": "ready", "checks": checks}
-    return JSONResponse(
-        status_code=503,
-        content={"status": "not_ready", "checks": checks},
-    )
+    return JSONResponse(status_code=503, content={"status": "not_ready", "checks": checks})
+
+
+@app.get("/metrics")
+async def prometheus_metrics():
+    body, content_type = metrics_response()
+    return Response(content=body, media_type=content_type)
 
 
 @app.get("/")
 async def root():
     return {
         "name": "ModelBridge",
-        "version": "0.1.0",
+        "version": "1.0.0",
         "description": "One API for every AI model.",
         "docs": "/docs",
+        "metrics": "/metrics",
     }

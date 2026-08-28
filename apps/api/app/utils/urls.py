@@ -16,20 +16,19 @@ from __future__ import annotations
 
 import ipaddress
 import re
-
 from urllib.parse import urlparse
 
-# Provider types that legitimately live on a local/private network.
-_LOCAL_TYPES = {"ollama", "lmstudio"}
-
-# Provider types built on the OpenAI wire format; they may point at a local
-# OpenAI-compatible server (LM Studio, vLLM, ...), so private hosts are allowed.
-_COMPATIBLE_TYPES = {"lmstudio", "custom", "openai", "groq", "openrouter"}
+# Provider types that legitimately live on a local/private network. This
+# includes the local providers (Ollama, LM Studio) and arbitrary user-defined
+# OpenAI-compatible endpoints (custom), which are commonly served on localhost
+# (LM Studio, vLLM, ...). Known cloud providers (openai, groq, openrouter,
+# anthropic, gemini) are restricted to public hosts below.
+_LOCAL_TYPES = {"ollama", "lmstudio", "custom"}
 
 _ALLOWED_SCHEMES = {"http", "https"}
 
 
-class InvalidURL(ValueError):
+class InvalidURLError(ValueError):
     """Raised when a provider URL is rejected by validation."""
 
 
@@ -52,7 +51,7 @@ def validate_provider_url(url: str | None, provider_type: str) -> str | None:
     """Validate and normalize a provider base URL.
 
     Returns the trimmed URL or ``None`` when no URL is supplied. Raises
-    :class:`InvalidURL` when the URL is unsafe or malformed for the provider
+    :class:`InvalidURLError` when the URL is unsafe or malformed for the provider
     type.
     """
     if not url or not url.strip():
@@ -62,26 +61,31 @@ def validate_provider_url(url: str | None, provider_type: str) -> str | None:
     parsed = urlparse(url)
 
     if parsed.scheme not in _ALLOWED_SCHEMES:
-        raise InvalidURL(
+        raise InvalidURLError(
             f"Unsupported URL scheme '{parsed.scheme or 'none'}'; only http and https are allowed"
         )
 
     if not parsed.hostname:
-        raise InvalidURL("Provider URL must include a host")
+        raise InvalidURLError("Provider URL must include a host")
 
     if parsed.username or parsed.password:
-        raise InvalidURL("Provider URL must not embed credentials; supply the API key separately")
+        raise InvalidURLError("Provider URL must not embed credentials; supply the API key separately")
 
     host = parsed.hostname
 
     # Cloud-only types must not target a private/loopback host.
-    if provider_type not in _LOCAL_TYPES and provider_type not in _COMPATIBLE_TYPES:
+    if provider_type not in _LOCAL_TYPES:
         if _is_private_ip(host) or host == "localhost":
-            raise InvalidURL(f"URL host '{host}' is not allowed for provider type '{provider_type}'")
+            raise InvalidURLError(f"URL host '{host}' is not allowed for provider type '{provider_type}'")
 
     # Guard against control characters / header injection.
     if re.search(r"[\r\n\t]", url):
-        raise InvalidURL("Provider URL contains invalid characters")
+        raise InvalidURLError("Provider URL contains invalid characters")
 
-    normalized = parsed._replace(scheme=parsed.scheme.lower(), hostname=host.lower())
+    # Rebuild netloc with a normalized (lowercased) host, preserving any port.
+    port = f":{parsed.port}" if parsed.port else ""
+    normalized = parsed._replace(
+        scheme=parsed.scheme.lower(),
+        netloc=f"{host.lower()}{port}",
+    )
     return normalized.geturl().rstrip("/")

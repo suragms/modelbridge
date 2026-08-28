@@ -45,6 +45,30 @@ services:
         condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ["arq", "app.jobs.worker.WorkerSettings"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://modelbridge:modelbridge@postgres:5432/modelbridge
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: change-me-in-production-use-a-long-random-string
+      ENCRYPTION_KEY: change-me-generate-with-fernet-generate-key
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
   web:
     build:

@@ -12,11 +12,17 @@ class ProviderModel:
     context_window: int = 4096
     input_price_per_1k: float = 0.0
     output_price_per_1k: float = 0.0
+    supports_chat: bool = True
     supports_streaming: bool = True
     supports_tools: bool = False
     supports_embeddings: bool = False
     supports_vision: bool = False
     supports_json_mode: bool = False
+    supports_structured_output: bool = False
+    supports_tool_choice: bool = False
+    supports_reasoning: bool = False
+    embedding_dimensions: int | None = None
+    max_output_tokens: int | None = None
     quality_score: float = 0.5
 
 
@@ -110,3 +116,27 @@ class AIProvider(abc.ABC):
         input_text: str | list[str],
     ) -> EmbeddingResult:
         raise NotImplementedError(f"{self.provider_type} does not support embeddings")
+
+    def supports_capability(self, capability: str, model: ProviderModel | None = None) -> bool:
+        """Whether this provider supports a routing capability.
+
+        The routing engine decisions are driven by the per-model capability
+        columns (``Model.supports_*``), so this method is a provider-level
+        complement used to answer capability questions about a provider or
+        model directly. ``chat`` is assumed for every provider; provider
+        subclasses may override the default mapping.
+        """
+        if model is None:
+            return capability == "chat"
+        mapping = {
+            "chat": model.supports_chat,
+            "streaming": model.supports_streaming,
+            "tools": model.supports_tools,
+            "embeddings": model.supports_embeddings,
+            "vision": model.supports_vision,
+            "json_mode": model.supports_json_mode,
+            "structured_output": model.supports_structured_output,
+            "tool_choice": model.supports_tool_choice,
+            "reasoning": model.supports_reasoning,
+        }
+        return bool(mapping.get(capability, False))

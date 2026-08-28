@@ -22,6 +22,7 @@ interface RequestOptions {
   method?: string;
   body?: unknown;
   token?: string;
+  orgId?: string | null;
 }
 
 function stripBase(path: string): string {
@@ -39,6 +40,9 @@ export async function apiRequest<T>(
   }
   if (options.token) {
     headers["Authorization"] = `Bearer ${options.token}`;
+  }
+  if (options.orgId) {
+    headers["X-Organization-ID"] = options.orgId;
   }
 
   const response = await fetch(`${API_BASE}${stripBase(path)}`, {
@@ -77,13 +81,14 @@ export async function apiRequest<T>(
 }
 
 export const api = {
-  get: <T>(path: string, token?: string) => apiRequest<T>(path, { token }),
-  post: <T>(path: string, body?: unknown, token?: string) =>
-    apiRequest<T>(path, { method: "POST", body, token }),
-  patch: <T>(path: string, body?: unknown, token?: string) =>
-    apiRequest<T>(path, { method: "PATCH", body, token }),
-  put: <T>(path: string, body?: unknown, token?: string) =>
-    apiRequest<T>(path, { method: "PUT", body, token }),
-  delete: <T>(path: string, token?: string) =>
-    apiRequest<T>(path, { method: "DELETE", token }),
+  get: <T>(path: string, token?: string, orgId?: string | null) =>
+    apiRequest<T>(path, { token, orgId }),
+  post: <T>(path: string, body?: unknown, token?: string, orgId?: string | null) =>
+    apiRequest<T>(path, { method: "POST", body, token, orgId }),
+  patch: <T>(path: string, body?: unknown, token?: string, orgId?: string | null) =>
+    apiRequest<T>(path, { method: "PATCH", body, token, orgId }),
+  put: <T>(path: string, body?: unknown, token?: string, orgId?: string | null) =>
+    apiRequest<T>(path, { method: "PUT", body, token, orgId }),
+  delete: <T>(path: string, token?: string, orgId?: string | null) =>
+    apiRequest<T>(path, { method: "DELETE", token, orgId }),
 };

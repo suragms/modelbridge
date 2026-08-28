@@ -12,18 +12,34 @@ from app.models.model import Model
 from app.models.provider import Provider
 from app.models.routing import RoutingPolicy
 from app.models.user import User
-from app.router.engine import RoutingEngine
+from app.router.engine import CandidateModel, RoutingEngine
 from app.schemas.routing import (
     RouteCandidate,
+    RoutingDebugEntry,
     RoutingPolicyCreate,
     RoutingPolicyResponse,
     RoutingPolicyUpdate,
     RoutingTestRequest,
     RoutingTestResponse,
 )
+from app.services.audit import (
+    AUDIT_ROUTING_POLICY_CREATED,
+    AUDIT_ROUTING_POLICY_UPDATED,
+    AuditService,
+)
 from app.services.routing import RouteService
 
 router = APIRouter(prefix="/routing", tags=["Routing"])
+
+
+async def _clear_default(db: AsyncSession, exclude_id: uuid.UUID | None = None) -> None:
+    """Unset ``is_default`` on any current default policy, optionally excluding one id."""
+    query = select(RoutingPolicy).where(RoutingPolicy.is_default == True)  # noqa: E712
+    if exclude_id is not None:
+        query = query.where(RoutingPolicy.id != exclude_id)
+    result = await db.execute(query)
+    for policy in result.scalars().all():
+        policy.is_default = False
 
 
 @router.get("/policies", response_model=list[RoutingPolicyResponse])
@@ -51,11 +67,9 @@ async def create_routing_policy(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # If this is default, unset any existing default
+    # If this is default, unset any existing default policy
     if payload.is_default:
-        await db.execute(
-            select(RoutingPolicy).where(RoutingPolicy.is_default == True)  # noqa: E712
-        )
+        await _clear_default(db)
 
     policy = RoutingPolicy(
         name=payload.name,
@@ -66,6 +80,11 @@ async def create_routing_policy(
     )
     db.add(policy)
     await db.flush()
+    audit = AuditService(db)
+    await audit.log(
+        AUDIT_ROUTING_POLICY_CREATED, "routing_policy", str(policy.id),
+        actor=user, metadata={"name": policy.name, "strategy": policy.strategy},
+    )
     return RoutingPolicyResponse.model_validate(policy)
 
 
@@ -108,15 +127,25 @@ async def update_routing_policy(
         policy.config = payload.config
     if payload.is_default is not None:
         if payload.is_default:
-            # Unset any existing default
-            await db.execute(
-                select(RoutingPolicy).where(
-                    RoutingPolicy.is_default == True, RoutingPolicy.id != policy_id  # noqa: E712
+            # Unset any other existing default policy.
+            await _clear_default(db, exclude_id=policy_id)
+        policy.is_default = payload.is_default
+        if not payload.is_default:
+            # Never leave the system without at least one default when removing it.
+            count_result = await db.execute(
+                select(RoutingPolicy.id).where(
+                    RoutingPolicy.is_default == True  # noqa: E712
                 )
             )
-        policy.is_default = payload.is_default
+            if not count_result.first():
+                policy.is_default = True
 
     await db.flush()
+    audit = AuditService(db)
+    await audit.log(
+        AUDIT_ROUTING_POLICY_UPDATED, "routing_policy", str(policy.id),
+        actor=user, metadata={"name": policy.name, "strategy": policy.strategy},
+    )
     return RoutingPolicyResponse.model_validate(policy)
 
 
@@ -164,8 +193,8 @@ async def test_routing(
             raise HTTPException(status_code=404, detail=f"Policy '{payload.policy_name}' not found")
 
     required = set(payload.required_capabilities) if payload.required_capabilities else {"chat"}
-    if payload.requested_model != "auto":
-        required.add("chat")  # specific model must support chat
+    if payload.requested_model != "auto" and "embeddings" not in required:
+        required.add("chat")
 
     plan = await route_service.plan(
         requested_model=payload.requested_model,
@@ -175,33 +204,45 @@ async def test_routing(
         org_id=user.organization_id,
     )
 
-    # Build candidate list (all candidates before filtering)
+    strategy = payload.strategy or (policy.strategy if policy else "auto")
+    policy_config = policy.config if policy else {}
+
+    # All models in the registry (informational), ranked by the strategy.
     model_result = await db.execute(select(Model))
     all_models = list(model_result.scalars().all())
 
     provider_ids = list({str(m.provider_id) for m in all_models})
-    provider_result = await db.execute(select(Provider).where(Provider.id.in_(provider_ids)))
-    all_providers = list(provider_result.scalars().all())
+    provider_map = {}
+    if provider_ids:
+        provider_result = await db.execute(select(Provider).where(Provider.id.in_(provider_ids)))
+        provider_map = {str(p.id): p for p in provider_result.scalars().all()}
 
     engine = RoutingEngine()
-    all_candidates = engine.build_candidates(all_models, all_providers, required)
-    all_candidates = engine.ordered_candidates(
+    ordered = engine.ordered_candidates(
         all_models,
-        all_providers,
-        payload.strategy or (policy.strategy if policy else "auto"),
-        policy.config if policy else {},
+        list(provider_map.values()),
+        strategy,
+        policy_config,
         required,
     )
 
-    # Filtered = those that are actually eligible (not disabled/offline)
-    filtered = engine.build_candidates(all_models, all_providers, required)
-    filtered = engine.ordered_candidates(
-        all_models,
-        all_providers,
-        payload.strategy or (policy.strategy if policy else "auto"),
-        policy.config if policy else {},
-        required,
+    # "candidates" = every model ranked; "filtered" = those the engine would
+    # actually use (eligible: enabled, healthy provider, satisfies capabilities).
+    eligible_ids = {str(c.model.id) for c in ordered}
+    remaining = [
+        CandidateModel(model=m, provider=provider_map[str(m.provider_id)])
+        for m in all_models
+        if str(m.id) not in eligible_ids and str(m.provider_id) in provider_map
+    ]
+    # Rank remaining by strategy too so the view stays consistent.
+    remaining_ranked = engine.ordered_candidates(
+        [r.model for r in remaining],
+        list({r.provider for r in remaining}),
+        strategy,
+        policy_config,
+        set(),
     )
+    all_candidates = ordered + remaining_ranked
 
     selected = plan.targets[0] if plan.targets else None
     reason = f"Selected via {plan.strategy} strategy" if selected else "No eligible models found"
@@ -209,45 +250,39 @@ async def test_routing(
     # Build fallback order from the plan
     fallback_order = [str(t.candidate.model.id) for t in plan.targets[1:]]
 
-    return RoutingTestResponse(
-        candidates=[
-            RouteCandidate(
-                model_id=c.model.id,
-                model_name=c.model.display_name,
-                provider_name=c.provider.name,
-                provider_type=c.provider.type.value,
-                score=c.score,
-                latency_ms=c.latency_ms,
-                cost_per_1k=c.cost_per_1k,
-                is_local=c.provider.type.value in {"ollama", "lmstudio"},
-            )
-            for c in all_candidates
-        ],
-        filtered=[
-            RouteCandidate(
-                model_id=c.model.id,
-                model_name=c.model.display_name,
-                provider_name=c.provider.name,
-                provider_type=c.provider.type.value,
-                score=c.score,
-                latency_ms=c.latency_ms,
-                cost_per_1k=c.cost_per_1k,
-                is_local=c.provider.type.value in {"ollama", "lmstudio"},
-            )
-            for c in filtered
-        ],
-        selected=RouteCandidate(
-            model_id=selected.candidate.model.id,
-            model_name=selected.candidate.model.display_name,
-            provider_name=selected.provider.name,
-            provider_type=selected.provider.type.value,
-            score=selected.candidate.score,
-            latency_ms=selected.candidate.latency_ms,
-            cost_per_1k=selected.candidate.cost_per_1k,
-            is_local=selected.provider.type.value in {"ollama", "lmstudio"},
+    debug_entries: list[RoutingDebugEntry] = []
+    for m in all_models:
+        provider = provider_map.get(str(m.provider_id))
+        reason = RoutingEngine.explain_filter(m, provider, required)
+        debug_entries.append(RoutingDebugEntry(
+            model_id=m.id,
+            model_name=m.display_name,
+            provider_name=provider.name if provider else "unknown",
+            eligible=reason is None,
+            filter_reason=reason,
+        ))
+
+    def _candidate(c, eligible: bool) -> RouteCandidate:
+        reason = RoutingEngine.explain_filter(c.model, c.provider, required)
+        return RouteCandidate(
+            model_id=c.model.id,
+            model_name=c.model.display_name,
+            provider_name=c.provider.name,
+            provider_type=c.provider.type.value,
+            score=c.score,
+            latency_ms=c.latency_ms,
+            cost_per_1k=c.cost_per_1k,
+            is_local=c.provider.type.value in {"ollama", "lmstudio"},
+            eligible=eligible,
+            filter_reason=reason,
         )
-        if selected
-        else None,
+
+    return RoutingTestResponse(
+        candidates=[_candidate(c, str(c.model.id) in eligible_ids) for c in all_candidates],
+        filtered=[_candidate(c, True) for c in ordered],
+        debug=debug_entries,
+        requested_capabilities=sorted(required),
+        selected=_candidate(selected.candidate, True) if selected else None,
         strategy=plan.strategy,
         reason=reason,
         fallback_order=fallback_order,

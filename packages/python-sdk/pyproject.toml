@@ -1,0 +1,18 @@
+[project]
+name = "modelbridge-sdk"
+version = "1.0.0"
+description = "Official Python SDK for ModelBridge AI Gateway"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.28.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3.0", "pytest-asyncio>=0.24.0", "respx>=0.21.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

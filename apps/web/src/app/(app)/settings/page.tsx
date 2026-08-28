@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -9,8 +10,7 @@ export default function SettingsPage() {
   const rows = [
     { label: "Email", value: user?.email ?? "—" },
     { label: "Full name", value: user?.full_name ?? "—" },
-    { label: "Role", value: user?.role ?? "—" },
-    { label: "Organization ID", value: user?.organization_id ?? "—" },
+    { label: "Legacy role", value: user?.role ?? "—" },
   ];
 
   return (
@@ -18,8 +18,27 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-sm text-[var(--muted-foreground)]">
-          Account and instance configuration
+          Account and organization configuration
         </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Link href="/settings/organization">
+          <Card className="transition-colors hover:bg-[var(--muted)]/40">
+            <CardHeader>
+              <CardTitle className="text-base">Organization</CardTitle>
+              <CardDescription>Rate limits, quotas, budgets, retention</CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
+        <Link href="/settings/members">
+          <Card className="transition-colors hover:bg-[var(--muted)]/40">
+            <CardHeader>
+              <CardTitle className="text-base">Members</CardTitle>
+              <CardDescription>Team roles and invite tokens</CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
       </div>
 
       <Card>

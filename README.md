@@ -32,9 +32,30 @@ Switching between AI providers means rewriting code, juggling API keys, and mana
 - **Intelligent Routing** — Auto, balanced, cheapest, fastest, quality, local-only, privacy-first strategies
 - **Fallback System** — Automatic failover when providers are unavailable
 - **Usage Tracking** — Token counting, cost estimation, request logging
-- **Analytics Dashboard** — Monitor usage, latency, costs, and provider health
+- **Observability & Analytics** — Request lifecycle tracking, real-time dashboards, Prometheus metrics, audit logging
 - **Streaming** — Full SSE streaming support
-- **Tool Calling** — Function/tool calling support for compatible models
+- **Advanced AI Features**
+  - Embeddings API (`POST /v1/embeddings`) with capability-aware routing
+  - Tool/function calling with OpenAI-compatible normalization (gateway only — no auto-execution)
+  - JSON mode and structured output routing
+  - Vision/multimodal support with image URL security controls
+  - Capability-aware routing (chat, tools, vision, embeddings, JSON)
+- **AI Playground** — Interactive model testing at `/playground` with real gateway requests
+- **Model Comparison** — Side-by-side comparison at `/playground/compare`
+- **Production Features**
+  - Multi-tenant organizations with membership and org switching
+  - Role-based access control (OWNER, ADMIN, MEMBER, VIEWER)
+  - API key scopes and expiration enforcement
+  - Redis-backed rate limiting with standard headers
+  - Token quotas and estimated cost budgets with in-app alerts
+  - ARQ background jobs (provider health checks, data retention)
+  - Production Docker (multi-stage, non-root) and Kubernetes manifests
+- **Developer Platform (Phase 6)**
+  - Official CLI (`modelbridge`) — chat, embeddings, analytics, org management
+  - Python SDK (`modelbridge-sdk`) with sync/async and streaming
+  - TypeScript SDK (`@modelbridge/sdk`)
+  - Plugin architecture for provider extensions
+  - Benchmark framework, examples, and release automation
 - **Authentication** — JWT auth, API keys, role-based access
 - **Multi-Tenant** — Organizations with per-org providers, keys, and analytics
 - **Docker Ready** — One-command deployment with Docker Compose
@@ -138,6 +159,20 @@ JWT_SECRET=your-secret-here
 ENCRYPTION_KEY=your-encryption-key
 ```
 
+## Observability
+
+- ✓ Request tracking with unique IDs and lifecycle statuses
+- ✓ Token usage tracking (provider-reported, estimated, or unavailable)
+- ✓ Estimated cost tracking with pricing registry
+- ✓ Provider and model performance monitoring
+- ✓ Request explorer with server-side filtering
+- ✓ Analytics dashboard with real data charts
+- ✓ Prometheus metrics at `/metrics`
+- ✓ Audit logging for administrative actions
+- ✓ OpenTelemetry-ready tracing abstraction
+
+See [docs/observability.md](docs/observability.md) for details.
+
 ## API Endpoints
 
 | Endpoint | Description |
@@ -148,8 +183,12 @@ ENCRYPTION_KEY=your-encryption-key
 | `POST /auth/login` | Sign in |
 | `GET /providers` | List providers |
 | `POST /providers` | Add provider |
-| `GET /analytics/summary` | Usage summary |
-| `GET /logs` | Request logs |
+| `GET /analytics/overview` | Analytics overview |
+| `GET /analytics/requests` | Requests time series |
+| `GET /logs` | Request logs (filterable) |
+| `GET /logs/{request_id}` | Request detail |
+| `GET /metrics` | Prometheus metrics |
+| `GET /audit` | Audit logs |
 | `GET /health` | Health check |
 
 Interactive docs are available at [`/docs`](http://localhost:8000/docs) (Swagger) and [`/redoc`](http://localhost:8000/redoc) when the API is running.

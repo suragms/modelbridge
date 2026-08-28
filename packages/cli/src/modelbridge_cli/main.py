@@ -1,0 +1,418 @@
+"""ModelBridge CLI entry point."""
+
+from __future__ import annotations
+
+import json
+import sys
+from datetime import datetime, timedelta
+from typing import Optional
+
+import typer
+from rich.console import Console
+from rich.table import Table
+
+from modelbridge_cli import __version__
+from modelbridge_cli.client import CLIClient
+from modelbridge_cli.config import clear_config, get, load_config, save_config, set_value, show_config
+
+app = typer.Typer(
+    name="modelbridge",
+    help="Official ModelBridge CLI — manage and interact with your AI gateway.",
+    no_args_is_help=True,
+)
+config_app = typer.Typer(help="Manage CLI configuration")
+providers_app = typer.Typer(help="Provider commands")
+models_app = typer.Typer(help="Model commands")
+analytics_app = typer.Typer(help="Analytics commands")
+requests_app = typer.Typer(help="Request log commands")
+org_app = typer.Typer(help="Organization commands")
+benchmark_app = typer.Typer(help="Benchmark commands")
+
+app.add_typer(config_app, name="config")
+app.add_typer(providers_app, name="providers")
+app.add_typer(models_app, name="models")
+app.add_typer(analytics_app, name="analytics")
+app.add_typer(requests_app, name="requests")
+app.add_typer(org_app, name="org")
+app.add_typer(benchmark_app, name="benchmark")
+
+console = Console()
+
+
+def _print_json(data: object, as_json: bool) -> None:
+    if as_json:
+        console.print_json(json.dumps(data, default=str))
+    else:
+        console.print(data)
+
+
+@app.callback()
+def main(
+    version: bool = typer.Option(False, "--version", "-V", help="Show version"),
+):
+    if version:
+        console.print(f"modelbridge {__version__}")
+        raise typer.Exit()
+
+
+# --- config ---
+
+@config_app.command("set")
+def config_set(key: str, value: str):
+    """Set a configuration value (url, api-key, org-id)."""
+    mapping = {"api-key": "api_key", "api_key": "api_key", "url": "url", "org-id": "org_id", "org_id": "org_id"}
+    k = mapping.get(key, key)
+    set_value(k, value)
+    console.print(f"Set {k}")
+
+
+@config_app.command("get")
+def config_get(key: str):
+    cfg = show_config()
+    mapping = {"api-key": "api_key", "api_key": "api_key", "url": "url", "org-id": "org_id"}
+    k = mapping.get(key, key)
+    console.print(cfg.get(k, get(k)))
+
+
+@config_app.command("show")
+def config_show():
+    for k, v in show_config().items():
+        console.print(f"{k}: {v}")
+
+
+@config_app.command("clear")
+def config_clear():
+    clear_config()
+    console.print("Configuration cleared.")
+
+
+@config_app.command("validate")
+def config_validate():
+    """Validate CLI configuration (does not reveal secrets)."""
+    cfg = load_config()
+    issues = []
+    if not cfg.get("url"):
+        issues.append("url is not set")
+    if not cfg.get("api_key") and not cfg.get("access_token"):
+        issues.append("Neither api_key nor access_token is set")
+    try:
+        client = CLIClient()
+        health = client.get("/health", auth=False)
+        console.print(f"Server: {health.get('status', 'unknown')} (v{health.get('version', '?')})")
+    except Exception as e:
+        issues.append(f"Cannot reach server: {e}")
+    if issues:
+        for i in issues:
+            console.print(f"[red]✗[/red] {i}")
+        raise typer.Exit(1)
+    console.print("[green]✓[/green] Configuration looks valid")
+
+
+# --- login ---
+
+@app.command("login")
+def login(
+    email: str = typer.Option(..., prompt=True),
+    password: str = typer.Option(..., prompt=True, hide_input=True),
+):
+    """Authenticate with email/password and store access token."""
+    client = CLIClient()
+    try:
+        data = client.post("/auth/login", {"email": email, "password": password}, auth=False)
+    except Exception as e:
+        console.print(f"[red]Login failed:[/red] {e}")
+        raise typer.Exit(1)
+    save_config({
+        "access_token": data["access_token"],
+        "email": email,
+        "org_id": data.get("user", {}).get("organization_id"),
+    })
+    console.print("[green]Logged in successfully.[/green]")
+
+
+# --- status ---
+
+@app.command("status")
+def status(json_out: bool = typer.Option(False, "--json")):
+    """Show server and dependency status."""
+    client = CLIClient()
+    try:
+        health = client.get("/health", auth=False)
+    except Exception as e:
+        console.print(f"[red]Server unreachable:[/red] {e}")
+        raise typer.Exit(1)
+
+    info = {
+        "server_status": health.get("status"),
+        "version": health.get("version"),
+        "checks": health.get("checks", {}),
+        "url": client.base_url,
+        "org_id": client.org_id,
+    }
+    if client.token:
+        try:
+            orgs = client.get("/organizations/", dashboard=True)
+            info["organizations"] = len(orgs)
+        except Exception:
+            info["organizations"] = "auth required"
+    if json_out:
+        _print_json(info, True)
+        return
+    console.print(f"Server: {info['server_status']} (v{info['version']})")
+    for k, v in info.get("checks", {}).items():
+        console.print(f"  {k}: {v}")
+    console.print(f"URL: {info['url']}")
+    if info.get("org_id"):
+        console.print(f"Active org: {info['org_id']}")
+
+
+# --- providers ---
+
+@providers_app.command("list")
+def providers_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    try:
+        providers = client.get("/providers/", dashboard=True)
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}\nRun [bold]modelbridge login[/bold] for dashboard access.")
+        raise typer.Exit(1)
+    if json_out:
+        _print_json(providers, True)
+        return
+    table = Table(title="Providers")
+    table.add_column("Name")
+    table.add_column("Type")
+    table.add_column("Status")
+    table.add_column("Enabled")
+    for p in providers:
+        table.add_row(p.get("name", ""), p.get("type", ""), p.get("status", ""), str(p.get("is_enabled", "")))
+    console.print(table)
+
+
+# --- models ---
+
+@models_app.command("list")
+def models_list(
+    provider: Optional[str] = typer.Option(None, "--provider"),
+    capability: Optional[str] = typer.Option(None, "--capability"),
+    available: bool = typer.Option(False, "--available"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    try:
+        models = client.get("/models/", dashboard=True)
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+
+    if capability:
+        cap_map = {
+            "chat": "supports_chat",
+            "streaming": "supports_streaming",
+            "tools": "supports_tools",
+            "vision": "supports_vision",
+            "embeddings": "supports_embeddings",
+            "json": "supports_json_mode",
+        }
+        field = cap_map.get(capability.lower(), capability)
+        models = [m for m in models if m.get(field)]
+
+    if available:
+        models = [m for m in models if m.get("is_enabled")]
+
+    if json_out:
+        _print_json(models, True)
+        return
+
+    table = Table(title="Models")
+    table.add_column("Name")
+    table.add_column("Provider ID")
+    table.add_column("Enabled")
+    for m in models:
+        table.add_row(m.get("display_name", ""), m.get("provider_model_id", ""), str(m.get("is_enabled")))
+    console.print(table)
+
+
+# --- chat ---
+
+@app.command("chat")
+def chat_cmd(
+    message: str = typer.Argument(..., help="User message"),
+    model: str = typer.Option("auto", "--model", "-m"),
+    temperature: Optional[float] = typer.Option(None, "--temperature", "-t"),
+    max_tokens: Optional[int] = typer.Option(None, "--max-tokens"),
+    stream: bool = typer.Option(False, "--stream"),
+):
+    """Send a chat completion through the gateway."""
+    client = CLIClient()
+    body: dict = {
+        "model": model,
+        "messages": [{"role": "user", "content": message}],
+        "stream": stream,
+    }
+    if temperature is not None:
+        body["temperature"] = temperature
+    if max_tokens is not None:
+        body["max_tokens"] = max_tokens
+
+    try:
+        if stream:
+            import json as _json
+
+            for chunk in client.stream_post("/v1/chat/completions", body):
+                if chunk == "[DONE]":
+                    break
+                data = _json.loads(chunk)
+                delta = data.get("choices", [{}])[0].get("delta", {})
+                content = delta.get("content")
+                if content:
+                    console.print(content, end="")
+            console.print()
+        else:
+            result = client.post("/v1/chat/completions", body, gateway=True)
+            content = result["choices"][0]["message"].get("content", "")
+            console.print(content)
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+
+
+# --- embeddings ---
+
+@app.command("embeddings")
+def embeddings_cmd(
+    text: str = typer.Argument(..., help="Text to embed"),
+    model: str = typer.Option("auto", "--model", "-m"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    try:
+        result = client.post("/v1/embeddings", {"model": model, "input": text}, gateway=True)
+        if json_out:
+            _print_json(result, True)
+        else:
+            dims = len(result["data"][0]["embedding"])
+            console.print(f"Embedding dimensions: {dims}")
+            console.print(f"Model: {result.get('model')}")
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+
+
+# --- analytics ---
+
+@analytics_app.command("overview")
+def analytics_overview(
+    days: int = typer.Option(30, "--days"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    start = (datetime.utcnow() - timedelta(days=days)).isoformat()
+    try:
+        data = client.get("/analytics/overview", dashboard=True, params={"start_date": start})
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+    _print_json(data, json_out)
+
+
+@analytics_app.command("providers")
+def analytics_providers(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/analytics/providers", dashboard=True)
+    _print_json(data, json_out)
+
+
+# --- requests ---
+
+@requests_app.command("list")
+def requests_list(
+    status: Optional[str] = typer.Option(None, "--status"),
+    limit: int = typer.Option(20, "--limit"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    params: dict = {"limit": limit}
+    if status:
+        params["status"] = status
+    data = client.get("/logs/", dashboard=True, params=params)
+    _print_json(data, json_out)
+
+
+@requests_app.command("get")
+def requests_get(request_id: str, json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get(f"/logs/{request_id}", dashboard=True)
+    _print_json(data, json_out)
+
+
+# --- org ---
+
+@org_app.command("list")
+def org_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/organizations/", dashboard=True)
+    _print_json(data, json_out)
+
+
+@org_app.command("current")
+def org_current(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/organizations/current", dashboard=True)
+    _print_json(data, json_out)
+
+
+@org_app.command("switch")
+def org_switch(organization_id: str):
+    client = CLIClient()
+    data = client.post(f"/organizations/current/switch?organization_id={organization_id}", {}, dashboard=True)
+    save_config({
+        "access_token": data["access_token"],
+        "org_id": data.get("user", {}).get("organization_id"),
+    })
+    console.print("[green]Organization switched.[/green]")
+
+
+# --- benchmark ---
+
+@benchmark_app.command("run")
+def benchmark_run(
+    model: str = typer.Option("auto", "--model"),
+    count: int = typer.Option(5, "--count"),
+    prompt: str = typer.Option("Hello", "--prompt"),
+):
+    """Run a simple latency benchmark (environment-dependent results)."""
+    import statistics
+    import time
+
+    client = CLIClient()
+    latencies: list[float] = []
+    errors = 0
+    for i in range(count):
+        start = time.time()
+        try:
+            client.post(
+                "/v1/chat/completions",
+                {"model": model, "messages": [{"role": "user", "content": prompt}], "stream": False, "max_tokens": 32},
+                gateway=True,
+            )
+            latencies.append((time.time() - start) * 1000)
+        except Exception:
+            errors += 1
+
+    if not latencies:
+        console.print("[red]All requests failed[/red]")
+        raise typer.Exit(1)
+
+    latencies.sort()
+    p50 = latencies[len(latencies) // 2]
+    p95 = latencies[int(len(latencies) * 0.95)] if len(latencies) > 1 else latencies[0]
+    console.print(f"Model: {model}")
+    console.print(f"Requests: {count} | Success: {len(latencies)} | Errors: {errors}")
+    console.print(f"Avg latency: {statistics.mean(latencies):.0f} ms")
+    console.print(f"P50: {p50:.0f} ms | P95: {p95:.0f} ms")
+    console.print("[dim]Results are environment-dependent — not universal rankings.[/dim]")
+
+
+if __name__ == "__main__":
+    app()

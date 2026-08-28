@@ -33,6 +33,18 @@ class ProviderRegistry:
         base_url: str | None = None,
         **kwargs,
     ) -> AIProvider:
+        # Plugin types take precedence when registered
+        try:
+            from app.plugins.manager import get_plugin_manager
+
+            plugin_provider = get_plugin_manager().create_provider(
+                provider_type, api_key=api_key, base_url=base_url, **kwargs
+            )
+            if plugin_provider is not None:
+                return plugin_provider
+        except Exception:
+            pass
+
         provider_cls = PROVIDER_MAP.get(provider_type)
         if not provider_cls:
             raise ValueError(f"Unknown provider type: {provider_type}")
@@ -49,7 +61,16 @@ class ProviderRegistry:
 
     @staticmethod
     def supported_types() -> list[str]:
-        return list(PROVIDER_MAP.keys())
+        types = list(PROVIDER_MAP.keys())
+        try:
+            from app.plugins.manager import get_plugin_manager
+
+            for ptype in get_plugin_manager().supported_types():
+                if ptype not in types:
+                    types.append(ptype)
+        except Exception:
+            pass
+        return types
 
 
 _registry: ProviderRegistry | None = None

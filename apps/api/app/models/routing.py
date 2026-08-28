@@ -14,13 +14,21 @@ class RoutingPolicy(Base):
     __tablename__ = "routing_policies"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
     strategy: Mapped[str] = mapped_column(String(50), nullable=False, default="auto")
     is_default: Mapped[bool] = mapped_column(Boolean, default=False)
     config: Mapped[dict | None] = mapped_column(JSONB, default=dict)
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
     )
 
     rules = relationship("RoutingRule", back_populates="policy", lazy="selectin")

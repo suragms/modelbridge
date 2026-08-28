@@ -13,6 +13,7 @@ from app.providers.base import (
     ProviderModel,
     StreamChunk,
 )
+from app.providers.capabilities import infer_capabilities
 
 
 class OllamaProvider(AIProvider):
@@ -65,6 +66,10 @@ class OllamaProvider(AIProvider):
             if max_tokens is not None:
                 payload["options"] = payload.get("options", {})
                 payload["options"]["num_predict"] = max_tokens
+            if tools:
+                payload["tools"] = tools
+            if response_format is not None:
+                payload["format"] = "json" if response_format.get("type") == "json_object" else None
 
             response = await client.post("/api/chat", json=payload)
             response.raise_for_status()
@@ -156,14 +161,18 @@ class OllamaProvider(AIProvider):
 
                 models = []
                 for model in data.get("models", []):
+                    name = model.get("name", "")
+                    inferred = infer_capabilities(name, "ollama")
                     models.append(ProviderModel(
-                        id=model.get("name", ""),
-                        name=model.get("name", ""),
-                        context_window=4096,
-                        supports_streaming=True,
-                        supports_embeddings=False,
-                        supports_tools=False,
-                        supports_vision=False,
+                        id=name,
+                        name=name,
+                        context_window=inferred.context_window,
+                        supports_chat=inferred.supports_chat,
+                        supports_streaming=inferred.supports_streaming,
+                        supports_embeddings=inferred.supports_embeddings,
+                        supports_tools=inferred.supports_tools,
+                        supports_vision=inferred.supports_vision,
+                        supports_json_mode=inferred.supports_json_mode,
                     ))
                 return models
             except Exception:

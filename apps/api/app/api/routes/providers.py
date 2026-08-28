@@ -12,14 +12,22 @@ from app.db.base import get_db
 from app.models.model import Model
 from app.models.provider import Provider, ProviderCredential
 from app.models.user import User
-from app.services.health import HealthService
 from app.schemas.provider import (
     ProviderCreate,
     ProviderResponse,
     ProviderTestResult,
     ProviderUpdate,
 )
-from app.utils.urls import InvalidURL, validate_provider_url
+from app.services.audit import (
+    AUDIT_PROVIDER_CREATED,
+    AUDIT_PROVIDER_DELETED,
+    AUDIT_PROVIDER_DISABLED,
+    AUDIT_PROVIDER_ENABLED,
+    AUDIT_PROVIDER_UPDATED,
+    AuditService,
+)
+from app.services.health import HealthService
+from app.utils.urls import InvalidURLError, validate_provider_url
 
 router = APIRouter(prefix="/providers", tags=["Providers"])
 
@@ -51,7 +59,7 @@ def _validated_base_url(base_url: str | None, provider_type: str) -> str | None:
     """Validate a provider URL against the provider type; reject unsafe URLs."""
     try:
         return validate_provider_url(base_url, provider_type)
-    except InvalidURL as e:
+    except InvalidURLError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -80,6 +88,12 @@ async def create_provider(
         )
         db.add(cred)
         await db.flush()
+
+    audit = AuditService(db)
+    await audit.log(
+        AUDIT_PROVIDER_CREATED, "provider", str(provider.id),
+        actor=user, metadata={"name": provider.name, "type": provider.type},
+    )
 
     return ProviderResponse.model_validate_from_provider(provider)
 
@@ -114,6 +128,7 @@ async def update_provider(
     db: AsyncSession = Depends(get_db),
 ):
     provider = await _get_owned_provider(db, provider_id, user)
+    was_enabled = provider.is_enabled
 
     if payload.name is not None:
         provider.name = payload.name
@@ -141,6 +156,16 @@ async def update_provider(
         await db.flush()
 
     await db.flush()
+
+    audit = AuditService(db)
+    await audit.log(
+        AUDIT_PROVIDER_UPDATED, "provider", str(provider.id),
+        actor=user, metadata={"name": provider.name},
+    )
+    if payload.is_enabled is not None and payload.is_enabled != was_enabled:
+        action = AUDIT_PROVIDER_ENABLED if payload.is_enabled else AUDIT_PROVIDER_DISABLED
+        await audit.log(action, "provider", str(provider.id), actor=user)
+
     return ProviderResponse.model_validate_from_provider(provider)
 
 
@@ -151,6 +176,11 @@ async def delete_provider(
     db: AsyncSession = Depends(get_db),
 ):
     provider = await _get_owned_provider(db, provider_id, user)
+    audit = AuditService(db)
+    await audit.log(
+        AUDIT_PROVIDER_DELETED, "provider", str(provider.id),
+        actor=user, metadata={"name": provider.name},
+    )
     await db.delete(provider)
     await db.flush()
 
@@ -264,11 +294,22 @@ async def sync_models(
             current.context_window = pm.context_window or current.context_window
             current.input_price_per_1k = pm.input_price_per_1k
             current.output_price_per_1k = pm.output_price_per_1k
+            if pm.input_price_per_1k > 0:
+                current.input_price_per_million = pm.input_price_per_1k * 1000
+                current.pricing_source = "PROVIDER_PRICING"
+            if pm.output_price_per_1k > 0:
+                current.output_price_per_million = pm.output_price_per_1k * 1000
             current.supports_streaming = pm.supports_streaming
             current.supports_tools = pm.supports_tools
             current.supports_embeddings = pm.supports_embeddings
             current.supports_vision = pm.supports_vision
             current.supports_json_mode = pm.supports_json_mode
+            current.supports_chat = getattr(pm, "supports_chat", True)
+            current.supports_structured_output = getattr(pm, "supports_structured_output", False)
+            current.supports_tool_choice = getattr(pm, "supports_tool_choice", pm.supports_tools)
+            current.supports_reasoning = getattr(pm, "supports_reasoning", False)
+            current.embedding_dimensions = getattr(pm, "embedding_dimensions", None)
+            current.max_output_tokens = getattr(pm, "max_output_tokens", None)
             current.quality_score = pm.quality_score
             current.is_enabled = True
             current.last_synced_at = now
@@ -285,6 +326,12 @@ async def sync_models(
                 supports_embeddings=pm.supports_embeddings,
                 supports_vision=pm.supports_vision,
                 supports_json_mode=pm.supports_json_mode,
+                supports_chat=getattr(pm, "supports_chat", True),
+                supports_structured_output=getattr(pm, "supports_structured_output", False),
+                supports_tool_choice=getattr(pm, "supports_tool_choice", pm.supports_tools),
+                supports_reasoning=getattr(pm, "supports_reasoning", False),
+                embedding_dimensions=getattr(pm, "embedding_dimensions", None),
+                max_output_tokens=getattr(pm, "max_output_tokens", None),
                 quality_score=pm.quality_score,
                 provider_id=provider.id,
                 is_enabled=True,

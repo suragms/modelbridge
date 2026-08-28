@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Activity, Boxes, Server, ShieldCheck } from "lucide-react";
+import { Activity, BarChart3, DollarSign, Timer, TrendingUp, Zap } from "lucide-react";
 
+import { TimeSeriesChart } from "@/components/charts/time-series-chart";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -14,179 +15,224 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  useAnalyticsCost,
+  useAnalyticsErrors,
+  useAnalyticsOverview,
+  useAnalyticsProviders,
+  useAnalyticsRequests,
+  useAnalyticsTokens,
   useHealth,
-  useModels,
   useProviders,
-  useRequestLogs,
 } from "@/lib/hooks";
 
 export default function DashboardPage() {
-  const providersQuery = useProviders();
-  const modelsQuery = useModels();
-  const requestsQuery = useRequestLogs();
+  const overview = useAnalyticsOverview();
+  const requests = useAnalyticsRequests();
+  const tokens = useAnalyticsTokens();
+  const cost = useAnalyticsCost();
+  const providers = useAnalyticsProviders();
+  const errors = useAnalyticsErrors({ start: undefined, end: undefined });
   const healthQuery = useHealth();
+  const providersQuery = useProviders();
 
-  const activeProviders =
-    providersQuery.data?.filter((p) => p.is_enabled).length ?? null;
-  const availableModels = modelsQuery.data ? modelsQuery.data.length : null;
-  const totalRequests = requestsQuery.data ? requestsQuery.data.length : null;
+  const ov = overview.data;
+  const hasData = ov?.has_data ?? false;
 
-  const systemStatus: string | null = healthQuery.data
-    ? healthQuery.data.status === "healthy"
-      ? "Healthy"
-      : "Degraded"
-    : null;
-
-  const loading =
-    providersQuery.isLoading || modelsQuery.isLoading || requestsQuery.isLoading;
-
-  const recentRequests = requestsQuery.data?.slice(0, 10) ?? [];
+  const systemStatus = healthQuery.data?.status ?? "unknown";
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="text-sm text-[var(--muted-foreground)]">
-          Overview of your gateway
+          Analytics console powered by real gateway traffic
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {!hasData && !overview.isLoading ? (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">
-              Active Providers
-            </CardTitle>
-            <Server className="h-4 w-4 text-[var(--muted-foreground)]" />
-          </CardHeader>
-          <CardContent>
-            {loading || activeProviders === null ? (
-              <p className="text-[var(--muted-foreground)]">—</p>
-            ) : activeProviders === 0 ? (
-              <div>
-                <p className="text-xl font-bold">0</p>
-                <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                  Add a provider to get started.
+          <CardContent className="py-12 text-center">
+            <p className="text-[var(--muted-foreground)]">
+              No request data available yet. Route your first request through{" "}
+              <code className="rounded bg-[var(--muted)] px-1">/v1/chat/completions</code>.
+            </p>
+            <Link href="/providers" className="mt-4 inline-block text-sm text-[var(--ring)] hover:underline">
+              Add a provider →
+            </Link>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Requests</CardTitle>
+                <Activity className="h-4 w-4 text-[var(--muted-foreground)]" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{overview.isLoading ? "—" : ov?.total_requests ?? 0}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Success Rate</CardTitle>
+                <TrendingUp className="h-4 w-4 text-[var(--muted-foreground)]" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">
+                  {overview.isLoading ? "—" : `${ov?.success_rate ?? 0}%`}
                 </p>
-              </div>
-            ) : (
-              <p className="text-2xl font-bold">{activeProviders}</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">
-              Available Models
-            </CardTitle>
-            <Boxes className="h-4 w-4 text-[var(--muted-foreground)]" />
-          </CardHeader>
-          <CardContent>
-            {loading || availableModels === null ? (
-              <p className="text-[var(--muted-foreground)]">—</p>
-            ) : availableModels === 0 ? (
-              <div>
-                <p className="text-xl font-bold">0</p>
-                <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                  Discover models from a provider.
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Total Tokens</CardTitle>
+                <Zap className="h-4 w-4 text-[var(--muted-foreground)]" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{overview.isLoading ? "—" : ov?.total_tokens ?? 0}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Est. Cost</CardTitle>
+                <DollarSign className="h-4 w-4 text-[var(--muted-foreground)]" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">
+                  {overview.isLoading ? "—" : `$${(ov?.estimated_total_cost ?? 0).toFixed(4)}`}
                 </p>
-              </div>
-            ) : (
-              <p className="text-2xl font-bold">{availableModels}</p>
-            )}
-          </CardContent>
-        </Card>
+                <p className="text-xs text-[var(--muted-foreground)]">Estimated, not exact billing</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">Avg Latency</CardTitle>
+                <Timer className="h-4 w-4 text-[var(--muted-foreground)]" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">
+                  {overview.isLoading ? "—" : `${(ov?.average_latency_ms ?? 0).toFixed(0)}ms`}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">
-              Total Requests
-            </CardTitle>
-            <Activity className="h-4 w-4 text-[var(--muted-foreground)]" />
-          </CardHeader>
-          <CardContent>
-            {loading || totalRequests === null ? (
-              <p className="text-[var(--muted-foreground)]">—</p>
-            ) : (
-              <p className="text-2xl font-bold">{totalRequests}</p>
-            )}
-          </CardContent>
-        </Card>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Requests Over Time</CardTitle></CardHeader>
+              <CardContent>
+                <TimeSeriesChart data={requests.data?.data ?? []} label="Requests" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-base">Tokens Over Time</CardTitle></CardHeader>
+              <CardContent>
+                <TimeSeriesChart data={tokens.data?.data ?? []} label="Tokens" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-base">Estimated Cost Over Time</CardTitle></CardHeader>
+              <CardContent>
+                <TimeSeriesChart
+                  data={cost.data?.data ?? []}
+                  label="Cost (USD, estimated)"
+                  valueFormatter={(v) => `$${v.toFixed(4)}`}
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <BarChart3 className="h-4 w-4" /> System
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted-foreground)]">Status</span>
+                  <Badge variant={systemStatus === "healthy" ? "success" : "warning"}>
+                    {systemStatus}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted-foreground)]">Active Providers</span>
+                  <span>{providersQuery.data?.filter((p) => p.is_enabled).length ?? "—"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted-foreground)]">Providers with Traffic</span>
+                  <span>{ov?.active_providers ?? "—"}</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium text-[var(--muted-foreground)]">
-              System Status
-            </CardTitle>
-            <ShieldCheck className="h-4 w-4 text-[var(--muted-foreground)]" />
-          </CardHeader>
-          <CardContent>
-            {systemStatus ? (
-              <Badge variant={systemStatus === "Healthy" ? "success" : "warning"}>
-                {systemStatus}
-              </Badge>
-            ) : (
-              <p className="text-[var(--muted-foreground)]">Unknown</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Top Providers</CardTitle></CardHeader>
+              <CardContent>
+                {(providers.data?.breakdown ?? []).length === 0 ? (
+                  <p className="text-sm text-[var(--muted-foreground)]">No provider data yet.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Provider</TableHead>
+                        <TableHead className="text-right">Requests</TableHead>
+                        <TableHead className="text-right">Success</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(providers.data?.breakdown ?? []).slice(0, 5).map((p) => (
+                        <TableRow key={p.provider}>
+                          <TableCell>{p.provider}</TableCell>
+                          <TableCell className="text-right">{p.total_requests}</TableCell>
+                          <TableCell className="text-right">{p.success_rate}%</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Recent Requests</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {requestsQuery.isLoading ? (
-            <p className="py-8 text-center text-[var(--muted-foreground)]">Loading…</p>
-          ) : recentRequests.length === 0 ? (
-            <div className="py-10 text-center">
-              <p className="text-[var(--muted-foreground)]">
-                No requests yet. Route your first request through{" "}
-                <code className="rounded bg-[var(--muted)] px-1">/v1/chat/completions</code>.
-              </p>
-              <Link
-                href="/providers"
-                className="mt-4 inline-block text-sm text-[var(--ring)] hover:underline"
-              >
-                Add a provider →
-              </Link>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Model</TableHead>
-                  <TableHead>Provider</TableHead>
-                  <TableHead className="text-right">Latency</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentRequests.map((log, idx) => (
-                  <TableRow key={log.id ?? idx}>
-                    <TableCell>
-                      {new Date(log.created_at).toLocaleTimeString()}
-                    </TableCell>
-                    <TableCell>{log.model}</TableCell>
-                    <TableCell>{log.provider}</TableCell>
-                    <TableCell className="text-right">
-                      {log.latency_ms.toFixed(0)}ms
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={log.status === "success" ? "success" : "destructive"}>
-                        {log.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-base">Recent Errors</CardTitle></CardHeader>
+              <CardContent>
+                {(errors.data?.errors ?? []).length === 0 ? (
+                  <p className="text-sm text-[var(--muted-foreground)]">No recent errors.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Provider</TableHead>
+                        <TableHead>Message</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(errors.data?.errors ?? []).slice(0, 5).map((e) => (
+                        <TableRow key={e.request_id}>
+                          <TableCell>
+                            <Badge variant="destructive">{e.error_type}</Badge>
+                          </TableCell>
+                          <TableCell>{e.provider}</TableCell>
+                          <TableCell className="max-w-xs truncate">{e.message}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center">
+            <Link href="/analytics" className="text-sm text-[var(--ring)] hover:underline">
+              View full analytics →
+            </Link>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -40,4 +40,10 @@ class User(Base):
     )
 
     organization = relationship("Organization", back_populates="users", lazy="selectin")
-    api_keys = relationship("APIKey", back_populates="user", lazy="selectin")
+    api_keys = relationship(
+        "APIKey",
+        back_populates="user",
+        foreign_keys="APIKey.user_id",
+        lazy="selectin",
+    )
+    memberships = relationship("OrganizationMember", back_populates="user", lazy="selectin")

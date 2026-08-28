@@ -16,7 +16,7 @@ Thank you for your interest in contributing to ModelBridge!
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/modelbridge.git
+git clone https://github.com/suragms/modelbridge.git
 cd modelbridge
 
 # Backend setup
@@ -24,6 +24,10 @@ cd apps/api
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -e ".[dev]"
+
+# CLI and Python SDK (optional)
+pip install -e ../../packages/cli
+pip install -e ../../packages/python-sdk
 
 # Start database services
 docker compose -f ../../docker-compose.dev.yml up postgres redis -d
@@ -38,6 +42,22 @@ uvicorn app.main:app --reload --port 8000
 cd ../web
 npm install
 npm run dev
+```
+
+### Running Tests
+
+```bash
+# API tests
+cd apps/api && pytest tests/ -v
+
+# CLI tests
+pytest packages/cli/tests/ -v
+
+# Python SDK tests
+pytest packages/python-sdk/tests/ -v
+
+# Frontend build
+cd apps/web && npm run build
 ```
 
 ### Docker Development
