@@ -19,6 +19,15 @@ AUDIT_API_KEY_CREATED = "api_key.created"
 AUDIT_API_KEY_REVOKED = "api_key.revoked"
 AUDIT_ROUTING_POLICY_CREATED = "routing_policy.created"
 AUDIT_ROUTING_POLICY_UPDATED = "routing_policy.updated"
+AUDIT_GOVERNANCE_POLICY_CREATED = "governance.policy_created"
+AUDIT_GOVERNANCE_POLICY_UPDATED = "governance.policy_updated"
+AUDIT_GOVERNANCE_POLICY_DELETED = "governance.policy_deleted"
+AUDIT_GOVERNANCE_POLICY_ENABLED = "governance.policy_enabled"
+AUDIT_GOVERNANCE_POLICY_DISABLED = "governance.policy_disabled"
+AUDIT_GOVERNANCE_APPROVAL = "governance.approval_reviewed"
+AUDIT_SETTINGS_UPDATED = "settings.updated"
+AUDIT_BUDGET_CHANGED = "budget.changed"
+AUDIT_QUOTA_CHANGED = "quota.changed"
 
 
 _SENSITIVE_KEYS = frozenset({

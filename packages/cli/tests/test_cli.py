@@ -45,3 +45,9 @@ def test_config_clear():
 def test_version():
     from modelbridge_cli import __version__
     assert __version__ == "1.0.0"
+
+
+def test_governance_help():
+    result = runner.invoke(app, ["governance", "--help"])
+    assert result.exit_code == 0
+    assert "policies" in result.stdout

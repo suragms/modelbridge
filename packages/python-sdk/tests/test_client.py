@@ -52,7 +52,12 @@ def test_auth_error():
 
 
 @respx.mock
-def test_health_no_auth():
+def test_governance_policies_requires_token():
+    respx.get("http://localhost:8000/governance/policies").mock(
+        return_value=httpx.Response(200, json=[])
+    )
+    client = ModelBridge(base_url="http://localhost:8000", token="jwt-test")
+    assert client.governance.policies() == []
     respx.get("http://localhost:8000/health").mock(
         return_value=httpx.Response(200, json={"status": "healthy", "version": "1.0.0"})
     )

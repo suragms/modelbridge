@@ -50,6 +50,23 @@ Switching between AI providers means rewriting code, juggling API keys, and mana
   - Token quotas and estimated cost budgets with in-app alerts
   - ARQ background jobs (provider health checks, data retention)
   - Production Docker (multi-stage, non-root) and Kubernetes manifests
+- **AI Governance**
+  - Policy engine (ALLOW / WARN / DENY / REQUIRE_APPROVAL / REDACT)
+  - Model allowlists and blocklists; provider and API-key restrictions
+  - Heuristic request/risk classification (not a compliance certification)
+  - PII and secret detection with safe logging (values never stored)
+  - Prompt/response redaction and heuristic content safety
+  - Approval workflow with replay header (not silent background execution)
+  - Governance audit trails, reports (JSON/CSV), dashboard, CLI, and SDKs
+- **AI Agent Infrastructure**
+  - Persistent agent definitions with organization isolation and resource limits
+  - Agent execution runtime with multi-step model + tool loop via gateway
+  - Secure built-in tool registry (no arbitrary code execution)
+  - Workflow orchestration with validation, scheduling, and webhook triggers
+  - Long-running jobs via ARQ workers with fallback inline execution
+  - Human-in-the-loop pauses for high-risk tools (Phase 8 approvals)
+  - Agent memory (execution, session, agent scopes) and execution traces
+  - Agent observability, cost tracking, dashboard, CLI, and SDKs
 - **Developer Platform (Phase 6)**
   - Official CLI (`modelbridge`) — chat, embeddings, analytics, org management
   - Python SDK (`modelbridge-sdk`) with sync/async and streaming

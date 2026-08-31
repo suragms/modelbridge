@@ -11,7 +11,10 @@ import {
   KeyRound,
   LayoutDashboard,
   LogOut,
+  Bot,
+  Workflow,
   Server,
+  ShieldCheck,
   Settings as SettingsIcon,
 } from "lucide-react";
 
@@ -28,6 +31,9 @@ const NAV_ITEMS = [
   { href: "/api-keys", label: "API Keys", icon: KeyRound },
   { href: "/requests", label: "Requests", icon: Activity },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/governance", label: "Governance", icon: ShieldCheck },
+  { href: "/agents", label: "Agents", icon: Bot },
+  { href: "/workflows", label: "Workflows", icon: Workflow },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 

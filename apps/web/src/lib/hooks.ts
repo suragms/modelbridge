@@ -451,3 +451,259 @@ export function useBudgetAlerts() {
     enabled: Boolean(token && orgId),
   });
 }
+
+export function useGovernanceOverview() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["governance-overview", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/governance/overview", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useGovernancePolicies() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["governance-policies", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/governance/policies", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useGovernancePolicy(id: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["governance-policy", orgId, id],
+    queryFn: () =>
+      api.get<Record<string, unknown>>(`/governance/policies/${id}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId && id),
+  });
+}
+
+export function useCreateGovernancePolicy() {
+  const token = useToken();
+  const orgId = useOrgId();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      api.post("/governance/policies", body, token ?? undefined, orgId ?? undefined),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["governance-policies"] }),
+  });
+}
+
+export function useUpdateGovernancePolicy() {
+  const token = useToken();
+  const orgId = useOrgId();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) =>
+      api.patch(`/governance/policies/${id}`, body, token ?? undefined, orgId ?? undefined),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["governance-policies"] });
+      client.invalidateQueries({ queryKey: ["governance-policy"] });
+    },
+  });
+}
+
+export function useDeleteGovernancePolicy() {
+  const token = useToken();
+  const orgId = useOrgId();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.delete(`/governance/policies/${id}`, token ?? undefined, orgId ?? undefined),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["governance-policies"] }),
+  });
+}
+
+export function useSimulatePolicy() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      api.post<Record<string, unknown>>("/governance/simulate", body, token ?? undefined, orgId ?? undefined),
+  });
+}
+
+export function useGovernanceEvents() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["governance-events", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/governance/events", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useGovernanceApprovals() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["governance-approvals", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/governance/approvals", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useReviewApproval() {
+  const token = useToken();
+  const orgId = useOrgId();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, action, comment }: { id: string; action: "approve" | "reject"; comment?: string }) =>
+      api.post(`/governance/approvals/${id}/${action}`, { comment }, token ?? undefined, orgId ?? undefined),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["governance-approvals"] }),
+  });
+}
+
+export function useGovernanceSettings() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["governance-settings", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/governance/settings", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useUpdateGovernanceSettings() {
+  const token = useToken();
+  const orgId = useOrgId();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      api.patch("/governance/settings", body, token ?? undefined, orgId ?? undefined),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["governance-settings"] }),
+  });
+}
+
+export function useGovernanceNotifications() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["governance-notifications", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/governance/notifications", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+// ---- Agents ---------------------------------------------------------------
+
+export function useAgentsOverview() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["agents-overview", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/agents/overview", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useAgents() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["agents", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/agents", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useAgent(id: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["agent", orgId, id],
+    queryFn: () =>
+      api.get<Record<string, unknown>>(`/agents/${id}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId && id),
+  });
+}
+
+export function useAgentExecutions(agentId?: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["agent-executions", orgId, agentId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>(
+        `/agents/executions/list${agentId ? `?agent_id=${agentId}` : ""}`,
+        token ?? undefined,
+        orgId ?? undefined
+      ),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useAgentExecution(id: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["agent-execution", orgId, id],
+    queryFn: () =>
+      api.get<Record<string, unknown>>(`/agents/executions/${id}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId && id),
+  });
+}
+
+export function useExecuteAgent() {
+  const token = useToken();
+  const orgId = useOrgId();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) =>
+      api.post(`/agents/${id}/execute`, body, token ?? undefined, orgId ?? undefined),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["agent-executions"] });
+      client.invalidateQueries({ queryKey: ["agents-overview"] });
+    },
+  });
+}
+
+export function useWorkflows() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["workflows", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/workflows", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useWorkflowExecutions(workflowId?: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["workflow-executions", orgId, workflowId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>(
+        `/workflows/executions/list${workflowId ? `?workflow_id=${workflowId}` : ""}`,
+        token ?? undefined,
+        orgId ?? undefined
+      ),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useWorkflowExecution(id: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["workflow-execution", orgId, id],
+    queryFn: () =>
+      api.get<Record<string, unknown>>(`/workflows/executions/${id}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId && id),
+  });
+}

@@ -4,6 +4,14 @@ All notable changes to ModelBridge are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+
+- Phase 9 AI agent infrastructure: agent definitions, execution engine, tool registry, workflows, ARQ jobs, memory, observability, dashboard, CLI, and SDKs
+- Phase 8 AI governance: policy engine, allow/block lists, PII/secret detection, redaction, approvals, dashboard, CLI/SDK APIs, reports, and Prometheus governance metrics
+- Redis response-cache keys include policy fingerprints so policy changes cannot be bypassed by stale cache entries
+
 ## [1.0.0] - 2026-08-28
 
 ### Added

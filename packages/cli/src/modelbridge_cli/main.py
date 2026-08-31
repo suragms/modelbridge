@@ -35,6 +35,20 @@ app.add_typer(analytics_app, name="analytics")
 app.add_typer(requests_app, name="requests")
 app.add_typer(org_app, name="org")
 app.add_typer(benchmark_app, name="benchmark")
+governance_app = typer.Typer(help="AI governance commands")
+policies_gov_app = typer.Typer(help="Governance policies")
+approvals_gov_app = typer.Typer(help="Approval requests")
+events_gov_app = typer.Typer(help="Governance events")
+app.add_typer(governance_app, name="governance")
+governance_app.add_typer(policies_gov_app, name="policies")
+governance_app.add_typer(approvals_gov_app, name="approvals")
+governance_app.add_typer(events_gov_app, name="events")
+agents_app = typer.Typer(help="Agent commands")
+executions_app = typer.Typer(help="Agent execution commands")
+workflows_app = typer.Typer(help="Workflow commands")
+app.add_typer(agents_app, name="agents")
+agents_app.add_typer(executions_app, name="executions")
+app.add_typer(workflows_app, name="workflows")
 
 console = Console()
 
@@ -412,6 +426,102 @@ def benchmark_run(
     console.print(f"Avg latency: {statistics.mean(latencies):.0f} ms")
     console.print(f"P50: {p50:.0f} ms | P95: {p95:.0f} ms")
     console.print("[dim]Results are environment-dependent — not universal rankings.[/dim]")
+
+
+@policies_gov_app.command("list")
+def governance_policies_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/governance/policies", dashboard=True)
+    _print_json(data, json_out)
+
+
+@policies_gov_app.command("get")
+def governance_policies_get(policy_id: str, json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get(f"/governance/policies/{policy_id}", dashboard=True)
+    _print_json(data, json_out)
+
+
+@events_gov_app.command("list")
+def governance_events_list(
+    json_out: bool = typer.Option(False, "--json"),
+    days: int = typer.Option(30, "--days"),
+):
+    client = CLIClient()
+    data = client.get("/governance/events", dashboard=True, params={"days": days})
+    _print_json(data, json_out)
+
+
+@approvals_gov_app.command("list")
+def governance_approvals_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/governance/approvals", dashboard=True)
+    _print_json(data, json_out)
+
+
+@agents_app.command("list")
+def agents_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/agents", dashboard=True)
+    _print_json(data, json_out)
+
+
+@agents_app.command("get")
+def agents_get(agent_id: str, json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get(f"/agents/{agent_id}", dashboard=True)
+    _print_json(data, json_out)
+
+
+@agents_app.command("execute")
+def agents_execute(
+    agent_id: str,
+    input_text: str = typer.Option("", "--input"),
+    sync: bool = typer.Option(False, "--sync"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    data = client.post(
+        f"/agents/{agent_id}/execute",
+        {"input_text": input_text or None, "sync": sync},
+        dashboard=True,
+    )
+    _print_json(data, json_out)
+
+
+@executions_app.command("list")
+def agent_executions_list(
+    agent_id: Optional[str] = typer.Option(None, "--agent-id"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    path = "/agents/executions/list"
+    if agent_id:
+        path += f"?agent_id={agent_id}"
+    data = client.get(path, dashboard=True)
+    _print_json(data, json_out)
+
+
+@workflows_app.command("list")
+def workflows_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/workflows", dashboard=True)
+    _print_json(data, json_out)
+
+
+@workflows_app.command("execute")
+def workflows_execute(
+    workflow_id: str,
+    sync: bool = typer.Option(False, "--sync"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    data = client.post(
+        f"/workflows/{workflow_id}/execute",
+        {"sync": sync},
+        dashboard=True,
+    )
+    _print_json(data, json_out)
 
 
 if __name__ == "__main__":

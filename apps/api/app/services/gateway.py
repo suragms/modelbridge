@@ -50,6 +50,13 @@ from app.services.response_cache import (
     is_embedding_cacheable,
     parse_cache_policy,
 )
+from app.services.governance.pipeline import (
+    evaluate_pre_request,
+    evaluate_response,
+    extract_text,
+    filter_targets,
+    redact_messages,
+)
 from app.services.routing import RouteService, RouteTarget
 from app.services.token_estimator import estimate_message_tokens
 from app.services.tool_calls import normalize_message_tool_calls
@@ -183,6 +190,7 @@ async def execute_chat(
     user: User | None,
     api_key: APIKey | None,
     cache_policy: CachePolicy | str | None = None,
+    approval_id: str | None = None,
 ) -> GatewayResult:
     user_id, api_key_id, org_id = auth_context(user, api_key)
     request_id = generate_request_id()
@@ -199,6 +207,26 @@ async def execute_chat(
     validate_request_image_urls(collect_image_urls(payload.messages))
     caps_str = ",".join(sorted(required))
 
+    gov = await evaluate_pre_request(
+        db,
+        org_id=org_id,
+        user=user,
+        api_key=api_key,
+        requested_model=payload.model,
+        messages=payload.messages,
+        capabilities=required,
+        request_type="chat",
+        endpoint="/v1/chat/completions",
+        request_id=request_id,
+        approval_id=approval_id,
+        expose_details=user is not None,
+    )
+    provider_messages_list = payload.messages
+    if gov.should_redact_prompt:
+        provider_messages_list = redact_messages(
+            payload.messages, gov.redacted_text, extract_text(payload.messages)
+        )
+
     route_service = RouteService(db)
     routing_policy = await route_service.get_active_policy(strategy=None)
     plan = await route_service.plan(
@@ -208,7 +236,9 @@ async def execute_chat(
         strategy=None,
         request_count=None,
         org_id=org_id,
+        restrictions=gov.restrictions,
     )
+    plan.targets = filter_targets(plan.targets, gov.restrictions)
 
     if not plan.targets:
         raise_no_compatible_model(required, payload.model)
@@ -233,6 +263,7 @@ async def execute_chat(
             max_tokens=payload.max_tokens,
             stop=payload.stop,
             response_format=payload.response_format,
+            policy_fingerprint=gov.policy_fingerprint,
         )
         if policy == CachePolicy.FORCE_CACHE:
             cached = await cache.lookup(cache_key, endpoint="chat", policy=policy)
@@ -265,11 +296,24 @@ async def execute_chat(
         required_capabilities=caps_str,
     )
 
-    messages = provider_messages(payload.messages)
+    messages = provider_messages(provider_messages_list)
     response = await _execute_non_streaming(
         plan, messages, payload, request_id, user_id, api_key_id, org_id,
         usage_service, cost_service, start_time, required, caps_str,
     )
+
+    # Response governance
+    for choice in response.choices:
+        if choice.message and isinstance(choice.message.content, str):
+            choice.message.content = await evaluate_response(
+                db,
+                org_id=org_id,
+                text=choice.message.content,
+                ctx=gov,
+                request_id=request_id,
+                requested_model=payload.model,
+                actor_id=user_id,
+            )
 
     if cache_key and is_chat_cacheable(
         stream=False,
@@ -459,6 +503,7 @@ async def execute_embeddings(
     user: User | None,
     api_key: APIKey | None,
     cache_policy: CachePolicy | str | None = None,
+    approval_id: str | None = None,
 ) -> EmbeddingResponse:
     user_id, api_key_id, org_id = auth_context(user, api_key)
     request_id = generate_request_id()
@@ -471,6 +516,22 @@ async def execute_embeddings(
     if not inputs:
         raise HTTPException(status_code=400, detail="At least one input is required")
 
+    gov = await evaluate_pre_request(
+        db,
+        org_id=org_id,
+        user=user,
+        api_key=api_key,
+        requested_model=payload.model,
+        messages=None,
+        extra_text="\n".join(str(i) for i in inputs),
+        capabilities=required,
+        request_type="embedding",
+        endpoint="/v1/embeddings",
+        request_id=request_id,
+        approval_id=approval_id,
+        expose_details=user is not None,
+    )
+
     cache = get_response_cache()
     cache_key: str | None = None
     if is_embedding_cacheable(policy=policy):
@@ -479,6 +540,7 @@ async def execute_embeddings(
             model=payload.model,
             inputs=[str(i) for i in inputs],
             encoding_format=payload.encoding_format,
+            policy_fingerprint=gov.policy_fingerprint,
         )
         if policy == CachePolicy.FORCE_CACHE:
             cached = await cache.lookup(cache_key, endpoint="embeddings", policy=policy)
@@ -497,7 +559,9 @@ async def execute_embeddings(
         policy=routing_policy,
         strategy=None,
         org_id=org_id,
+        restrictions=gov.restrictions,
     )
+    plan.targets = filter_targets(plan.targets, gov.restrictions)
     if not plan.targets:
         raise_no_compatible_model(required, payload.model)
 

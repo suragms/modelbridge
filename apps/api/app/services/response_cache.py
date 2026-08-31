@@ -57,6 +57,7 @@ def build_chat_cache_key(
     max_tokens: int | None = None,
     stop: str | list[str] | None = None,
     response_format: dict | None = None,
+    policy_fingerprint: str | None = None,
 ) -> str:
     settings = get_settings()
     normalized_messages = []
@@ -78,6 +79,7 @@ def build_chat_cache_key(
         "max_tokens": max_tokens,
         "stop": stop,
         "response_format": response_format,
+        "policy_fingerprint": policy_fingerprint or "none",
     }
     digest = _hash_payload(payload)
     return f"{settings.cache_key_prefix}:chat:{digest}"
@@ -89,6 +91,7 @@ def build_embedding_cache_key(
     model: str,
     inputs: list[str],
     encoding_format: str = "float",
+    policy_fingerprint: str | None = None,
 ) -> str:
     settings = get_settings()
     payload = {
@@ -97,6 +100,7 @@ def build_embedding_cache_key(
         "model": model,
         "inputs": inputs,
         "encoding_format": encoding_format,
+        "policy_fingerprint": policy_fingerprint or "none",
     }
     digest = _hash_payload(payload)
     return f"{settings.cache_key_prefix}:embed:{digest}"

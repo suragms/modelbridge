@@ -1,15 +1,19 @@
+from app.api.routes.agents import router as agents_router
 from app.api.routes.analytics import router as analytics_router
 from app.api.routes.api_keys import router as api_keys_router
 from app.api.routes.audit import router as audit_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.chat import router as chat_router
 from app.api.routes.embeddings import router as embeddings_router
+from app.api.routes.governance import router as governance_router
 from app.api.routes.logs import router as logs_router
 from app.api.routes.models import router as models_router
 from app.api.routes.organizations import router as organizations_router
 from app.api.routes.playground import router as playground_router
 from app.api.routes.providers import router as providers_router
 from app.api.routes.routing import router as routing_router
+
+from app.api.routes.workflows import router as workflows_router
 
 __all__ = [
     "auth_router",
@@ -24,4 +28,7 @@ __all__ = [
     "routing_router",
     "audit_router",
     "organizations_router",
+    "governance_router",
+    "agents_router",
+    "workflows_router",
 ]

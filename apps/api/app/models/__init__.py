@@ -1,6 +1,31 @@
+from app.models.agent import (
+    Agent,
+    AgentExecution,
+    AgentMemory,
+    AgentMessage,
+    AgentStatus,
+    AgentStep,
+    AgentTool,
+    ExecutionStatus,
+    MemoryScope,
+    Workflow,
+    WorkflowExecution,
+    WorkflowNode,
+    WorkflowSchedule,
+    WorkflowStatus,
+    WorkflowTrigger,
+)
 from app.models.api_key import APIKey, ALL_API_KEY_SCOPES, DEFAULT_API_KEY_SCOPES
 from app.models.audit import AuditLog
 from app.models.budget_alert import BudgetAlert
+from app.models.governance import (
+    ApprovalRequest,
+    GovernanceEvent,
+    GovernanceNotification,
+    GovernancePolicy,
+    GovernanceSettings,
+    PolicyVersion,
+)
 from app.models.health import HealthCheck
 from app.models.job_run import JobRun
 from app.models.model import Model, ModelCapability
@@ -36,4 +61,25 @@ __all__ = [
     "CostRecord",
     "HealthCheck",
     "AuditLog",
+    "GovernancePolicy",
+    "PolicyVersion",
+    "GovernanceEvent",
+    "ApprovalRequest",
+    "GovernanceNotification",
+    "GovernanceSettings",
+    "Agent",
+    "AgentTool",
+    "AgentExecution",
+    "AgentStep",
+    "AgentMemory",
+    "AgentMessage",
+    "AgentStatus",
+    "ExecutionStatus",
+    "MemoryScope",
+    "Workflow",
+    "WorkflowNode",
+    "WorkflowExecution",
+    "WorkflowSchedule",
+    "WorkflowTrigger",
+    "WorkflowStatus",
 ]

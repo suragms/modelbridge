@@ -46,6 +46,13 @@ from app.services.response_cache import (
     is_chat_cacheable,
     parse_cache_policy,
 )
+from app.services.governance.pipeline import (
+    evaluate_pre_request,
+    evaluate_response,
+    extract_text,
+    filter_targets,
+    redact_messages,
+)
 from app.services.routing import RouteService, RouteTarget
 from app.services.capabilities import collect_image_urls, detect_chat_capabilities
 from app.services.params import normalize_chat_params
@@ -154,6 +161,7 @@ async def chat_completions(
     request.state.rate_limit_headers = rate_headers
 
     cache_policy = parse_cache_policy(request.headers.get("X-ModelBridge-Cache-Policy"))
+    approval_id = request.headers.get("X-ModelBridge-Approval-ID")
 
     if authenticated_key is not None:
         authenticated_key.last_used_at = datetime.now(UTC)
@@ -168,12 +176,35 @@ async def chat_completions(
     usage_service = UsageService(db)
     cost_service = CostService(db)
 
+    required_caps = _required_capabilities(payload)
+    validate_request_image_urls(collect_image_urls(payload.messages))
+    caps_str = ",".join(sorted(required_caps))
+
+    with tracer.start_span("governance", SpanKind.INTERNAL):
+        gov = await evaluate_pre_request(
+            db,
+            org_id=org_id,
+            user=user,
+            api_key=authenticated_key,
+            requested_model=payload.model,
+            messages=payload.messages,
+            capabilities=required_caps,
+            request_type="chat",
+            endpoint="/v1/chat/completions",
+            request_id=request_id,
+            approval_id=approval_id,
+            expose_details=user is not None,
+        )
+
+    outbound_messages = payload.messages
+    if gov.should_redact_prompt:
+        outbound_messages = redact_messages(
+            payload.messages, gov.redacted_text, extract_text(payload.messages)
+        )
+
     with tracer.start_span("routing", SpanKind.INTERNAL):
         route_service = RouteService(db)
         policy = await route_service.get_active_policy(strategy=None)
-        required_caps = _required_capabilities(payload)
-        validate_request_image_urls(collect_image_urls(payload.messages))
-        caps_str = ",".join(sorted(required_caps))
         plan = await route_service.plan(
             requested_model=payload.model,
             required_capabilities=required_caps,
@@ -181,7 +212,9 @@ async def chat_completions(
             strategy=None,
             request_count=None,
             org_id=org_id,
+            restrictions=gov.restrictions,
         )
+        plan.targets = filter_targets(plan.targets, gov.restrictions)
 
     if not plan.targets:
         await usage_service.complete_request(
@@ -219,6 +252,7 @@ async def chat_completions(
             max_tokens=payload.max_tokens,
             stop=payload.stop,
             response_format=payload.response_format,
+            policy_fingerprint=gov.policy_fingerprint,
         )
         if cache_policy == CachePolicy.FORCE_CACHE:
             cached = await cache.lookup(cache_key, endpoint="chat", policy=cache_policy)
@@ -241,7 +275,7 @@ async def chat_completions(
         required_capabilities=caps_str,
     )
 
-    messages = _provider_messages(payload.messages)
+    messages = _provider_messages(outbound_messages)
 
     if payload.stream:
         return StreamingResponse(
@@ -258,12 +292,26 @@ async def chat_completions(
             },
         )
 
-    return await _execute_non_streaming(
+    response = await _execute_non_streaming(
         plan, messages, payload, request_id, user_id, api_key_id, org_id,
         db, usage_service, cost_service, start_time,
         cache_key=cache_key,
         cache_policy=cache_policy,
     )
+    for choice in response.choices:
+        content = choice.message.content if hasattr(choice.message, "content") else None
+        if isinstance(content, str):
+            if isinstance(choice.message, dict):
+                choice.message["content"] = await evaluate_response(
+                    db, org_id=org_id, text=content, ctx=gov, request_id=request_id,
+                    requested_model=payload.model, actor_id=user_id,
+                )
+            else:
+                choice.message.content = await evaluate_response(
+                    db, org_id=org_id, text=content, ctx=gov, request_id=request_id,
+                    requested_model=payload.model, actor_id=user_id,
+                )
+    return response
 
 
 async def _execute_non_streaming(

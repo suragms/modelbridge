@@ -5,9 +5,8 @@ from __future__ import annotations
 from enum import StrEnum
 
 from fastapi import Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.org_context import OrgContext, get_org_context
+from app.auth.org_context import OrgContext, get_org_context_with_header
 from app.models.organization_member import OrganizationRole
 
 
@@ -22,6 +21,12 @@ class Permission(StrEnum):
     ANALYTICS_READ = "analytics.read"
     PLAYGROUND_USE = "playground.use"
     AUDIT_READ = "audit.read"
+    GOVERNANCE_READ = "governance.read"
+    GOVERNANCE_MANAGE = "governance.manage"
+    GOVERNANCE_APPROVE = "governance.approve"
+    AGENTS_READ = "agents.read"
+    AGENTS_MANAGE = "agents.manage"
+    AGENTS_EXECUTE = "agents.execute"
 
 
 ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
@@ -35,15 +40,26 @@ ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
         Permission.ANALYTICS_READ,
         Permission.PLAYGROUND_USE,
         Permission.AUDIT_READ,
+        Permission.GOVERNANCE_READ,
+        Permission.GOVERNANCE_MANAGE,
+        Permission.GOVERNANCE_APPROVE,
+        Permission.AGENTS_READ,
+        Permission.AGENTS_MANAGE,
+        Permission.AGENTS_EXECUTE,
     }),
     OrganizationRole.MEMBER: frozenset({
         Permission.PLAYGROUND_USE,
         Permission.ANALYTICS_READ,
         Permission.KEYS_MANAGE,
+        Permission.GOVERNANCE_READ,
+        Permission.AGENTS_READ,
+        Permission.AGENTS_EXECUTE,
     }),
     OrganizationRole.VIEWER: frozenset({
         Permission.ANALYTICS_READ,
         Permission.AUDIT_READ,
+        Permission.GOVERNANCE_READ,
+        Permission.AGENTS_READ,
     }),
 }
 
@@ -53,7 +69,7 @@ def role_has_permission(role: OrganizationRole, permission: Permission) -> bool:
 
 
 def require_permission(permission: Permission):
-    async def _checker(ctx: OrgContext = Depends(get_org_context)) -> OrgContext:
+    async def _checker(ctx: OrgContext = Depends(get_org_context_with_header)) -> OrgContext:
         if not role_has_permission(ctx.role, permission):
             raise HTTPException(
                 status_code=403,

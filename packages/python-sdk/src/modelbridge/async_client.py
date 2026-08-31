@@ -115,6 +115,45 @@ class AsyncChat:
         self.completions = AsyncChatCompletions(transport)
 
 
+class AsyncGovernanceAPI:
+    def __init__(self, transport: AsyncHTTPTransport):
+        self._transport = transport
+
+    async def policies(self) -> list:
+        return await self._transport.request("GET", "/governance/policies", use_token=True)
+
+    async def events(self, **params: Any) -> list:
+        return await self._transport.request("GET", "/governance/events", params=params, use_token=True)
+
+    async def approvals(self, **params: Any) -> list:
+        return await self._transport.request("GET", "/governance/approvals", params=params, use_token=True)
+
+
+class AsyncAgentsAPI:
+    def __init__(self, transport: AsyncHTTPTransport):
+        self._transport = transport
+
+    async def list(self) -> list:
+        return await self._transport.request("GET", "/agents", use_token=True)
+
+    async def execute(self, agent_id: str, **body: Any) -> dict:
+        return await self._transport.request("POST", f"/agents/{agent_id}/execute", json_body=body, use_token=True)
+
+    async def get_execution(self, execution_id: str) -> dict:
+        return await self._transport.request("GET", f"/agents/executions/{execution_id}", use_token=True)
+
+
+class AsyncWorkflowsAPI:
+    def __init__(self, transport: AsyncHTTPTransport):
+        self._transport = transport
+
+    async def list(self) -> list:
+        return await self._transport.request("GET", "/workflows", use_token=True)
+
+    async def execute(self, workflow_id: str, **body: Any) -> dict:
+        return await self._transport.request("POST", f"/workflows/{workflow_id}/execute", json_body=body, use_token=True)
+
+
 class AsyncModelBridge:
     """Asynchronous ModelBridge client."""
 
@@ -129,6 +168,9 @@ class AsyncModelBridge:
         self._transport = AsyncHTTPTransport(base_url, api_key, token, timeout, org_id)
         self.chat = AsyncChat(self._transport)
         self.embeddings = AsyncEmbeddings(self._transport)
+        self.governance = AsyncGovernanceAPI(self._transport)
+        self.agents = AsyncAgentsAPI(self._transport)
+        self.workflows = AsyncWorkflowsAPI(self._transport)
 
     async def health(self) -> dict:
         return await self._transport.request("GET", "/health", auth=False)

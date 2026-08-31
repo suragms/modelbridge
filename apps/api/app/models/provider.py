@@ -47,6 +47,9 @@ class Provider(Base):
     last_health_latency_ms: Mapped[float | None] = mapped_column(Float)
     total_health_checks: Mapped[int] = mapped_column(Integer, default=0)
     failed_health_checks: Mapped[int] = mapped_column(Integer, default=0)
+    region: Mapped[str | None] = mapped_column(String(64))
+    data_residency: Mapped[str | None] = mapped_column(String(64))
+    deployment_type: Mapped[str | None] = mapped_column(String(20))
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)

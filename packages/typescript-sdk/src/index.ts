@@ -150,4 +150,83 @@ export class ModelBridge {
       return parseResponse(res);
     },
   };
+
+  governance = {
+    policies: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/governance/policies`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    events: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/governance/events`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    approvals: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/governance/approvals`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+  };
+
+  agents = {
+    list: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/agents`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    get: async (agentId: string): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/agents/${agentId}`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    execute: async (
+      agentId: string,
+      body: { input_text?: string; sync?: boolean } = {}
+    ): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/agents/${agentId}/execute`, {
+        method: "POST",
+        headers: headers(this.opts, true),
+        body: JSON.stringify(body),
+      });
+      return parseResponse(res);
+    },
+    getExecution: async (executionId: string): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/agents/executions/${executionId}`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+  };
+
+  workflows = {
+    list: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/workflows`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    execute: async (
+      workflowId: string,
+      body: { sync?: boolean; context?: Record<string, unknown> } = {}
+    ): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/workflows/${workflowId}/execute`, {
+        method: "POST",
+        headers: headers(this.opts, true),
+        body: JSON.stringify(body),
+      });
+      return parseResponse(res);
+    },
+    getExecution: async (executionId: string): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/workflows/executions/${executionId}`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+  };
 }

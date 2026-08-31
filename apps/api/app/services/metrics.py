@@ -44,10 +44,108 @@ CACHE_EVENTS = Counter(
     ["event", "endpoint"],
 )
 
+POLICY_EVALUATIONS = Counter(
+    "modelbridge_policy_evaluations_total",
+    "Governance policy evaluations",
+    ["decision"],
+)
+
+POLICY_BLOCKS = Counter(
+    "modelbridge_policy_blocks_total",
+    "Requests blocked by governance",
+    ["reason_code"],
+)
+
+SENSITIVE_DATA_EVENTS = Counter(
+    "modelbridge_sensitive_data_events_total",
+    "Sensitive data detections by category label",
+    ["category"],
+)
+
+REDACTIONS_TOTAL = Counter(
+    "modelbridge_redactions_total",
+    "Redactions applied",
+    ["stage"],
+)
+
+APPROVAL_REQUESTS = Counter(
+    "modelbridge_approval_requests_total",
+    "Approval workflow events",
+    ["status"],
+)
+
+GOVERNANCE_EVENTS = Counter(
+    "modelbridge_governance_events_total",
+    "Governance events by type",
+    ["event_type"],
+)
+
+AGENT_EXECUTIONS = Counter(
+    "modelbridge_agent_executions_total",
+    "Agent execution outcomes",
+    ["status"],
+)
+
+AGENT_STEPS = Counter(
+    "modelbridge_agent_steps_total",
+    "Agent execution steps",
+    ["step_type", "status"],
+)
+
+AGENT_TOOL_CALLS = Counter(
+    "modelbridge_agent_tool_calls_total",
+    "Agent tool invocations",
+    ["tool_name", "status"],
+)
+
+AGENT_EXECUTION_DURATION = Histogram(
+    "modelbridge_agent_execution_duration_seconds",
+    "Agent execution duration",
+    buckets=(0.5, 1, 2, 5, 10, 30, 60, 120, 300, 600),
+)
+
+WORKFLOW_EXECUTIONS = Counter(
+    "modelbridge_workflow_executions_total",
+    "Workflow execution outcomes",
+    ["status"],
+)
+
 
 def record_cache_event(event: str, endpoint: str) -> None:
     """Record cache hit/miss/write/bypass/error."""
     CACHE_EVENTS.labels(event=event, endpoint=endpoint).inc()
+
+
+def record_governance_event(event_type: str, decision: str) -> None:
+    bounded_type = event_type if len(event_type) < 80 else "other"
+    GOVERNANCE_EVENTS.labels(event_type=bounded_type).inc()
+    POLICY_EVALUATIONS.labels(decision=decision[:40]).inc()
+    if bounded_type == "policy.blocked":
+        POLICY_BLOCKS.labels(reason_code="policy").inc()
+    if bounded_type == "sensitive_data.detected":
+        SENSITIVE_DATA_EVENTS.labels(category="detected").inc()
+    if bounded_type in {"redaction.applied", "response.redacted"}:
+        stage = "response" if bounded_type.startswith("response") else "prompt"
+        REDACTIONS_TOTAL.labels(stage=stage).inc()
+    if bounded_type == "approval.requested":
+        APPROVAL_REQUESTS.labels(status="pending").inc()
+
+
+def record_agent_execution(status: str) -> None:
+    AGENT_EXECUTIONS.labels(status=status[:30]).inc()
+
+
+def record_agent_step(step_type: str, status: str) -> None:
+    AGENT_STEPS.labels(step_type=step_type[:20], status=status[:20]).inc()
+
+
+def record_agent_tool_call(tool_name: str, status: str) -> None:
+    bounded = tool_name if len(tool_name) < 40 else "other"
+    AGENT_TOOL_CALLS.labels(tool_name=bounded, status=status[:20]).inc()
+
+
+def record_workflow_execution(status: str) -> None:
+    WORKFLOW_EXECUTIONS.labels(status=status[:30]).inc()
 
 
 def record_request(

@@ -95,6 +95,83 @@ class RequestsAPI:
         return self._transport.request("GET", f"/logs/{request_id}", use_token=True)
 
 
+class GovernanceAPI:
+    """Dashboard governance APIs. Requires an access token (not an API key)."""
+
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def policies(self) -> list:
+        return self._transport.request("GET", "/governance/policies", use_token=True)
+
+    def get_policy(self, policy_id: str) -> dict:
+        return self._transport.request("GET", f"/governance/policies/{policy_id}", use_token=True)
+
+    def events(self, **params: Any) -> list:
+        return self._transport.request("GET", "/governance/events", params=params, use_token=True)
+
+    def approvals(self, **params: Any) -> list:
+        return self._transport.request("GET", "/governance/approvals", params=params, use_token=True)
+
+    def simulate(self, body: dict) -> dict:
+        return self._transport.request("POST", "/governance/simulate", json_body=body, use_token=True)
+
+
+class AgentsAPI:
+    """Agent definition and execution APIs (dashboard token required)."""
+
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def list(self) -> list:
+        return self._transport.request("GET", "/agents", use_token=True)
+
+    def get(self, agent_id: str) -> dict:
+        return self._transport.request("GET", f"/agents/{agent_id}", use_token=True)
+
+    def execute(self, agent_id: str, *, input_text: str | None = None, sync: bool = False, **kwargs: Any) -> dict:
+        body: dict[str, Any] = {"sync": sync, **kwargs}
+        if input_text is not None:
+            body["input_text"] = input_text
+        return self._transport.request("POST", f"/agents/{agent_id}/execute", json_body=body, use_token=True)
+
+    def get_execution(self, execution_id: str) -> dict:
+        return self._transport.request("GET", f"/agents/executions/{execution_id}", use_token=True)
+
+    def list_executions(self, **params: Any) -> list:
+        return self._transport.request("GET", "/agents/executions/list", params=params, use_token=True)
+
+    def cancel_execution(self, execution_id: str, reason: str | None = None) -> dict:
+        return self._transport.request(
+            "POST",
+            f"/agents/executions/{execution_id}/cancel",
+            json_body={"reason": reason},
+            use_token=True,
+        )
+
+
+class WorkflowsAPI:
+    """Workflow orchestration APIs (dashboard token required)."""
+
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def list(self) -> list:
+        return self._transport.request("GET", "/workflows", use_token=True)
+
+    def execute(self, workflow_id: str, *, sync: bool = False, context: dict | None = None, **kwargs: Any) -> dict:
+        body: dict[str, Any] = {"sync": sync, **kwargs}
+        if context:
+            body["context"] = context
+        return self._transport.request("POST", f"/workflows/{workflow_id}/execute", json_body=body, use_token=True)
+
+    def get_execution(self, execution_id: str) -> dict:
+        return self._transport.request("GET", f"/workflows/executions/{execution_id}", use_token=True)
+
+    def list_executions(self, **params: Any) -> list:
+        return self._transport.request("GET", "/workflows/executions/list", params=params, use_token=True)
+
+
 class ModelBridge:
     """Synchronous ModelBridge client."""
 
@@ -112,6 +189,9 @@ class ModelBridge:
         self.models = ModelsAPI(self._transport)
         self.analytics = AnalyticsAPI(self._transport)
         self.requests = RequestsAPI(self._transport)
+        self.governance = GovernanceAPI(self._transport)
+        self.agents = AgentsAPI(self._transport)
+        self.workflows = WorkflowsAPI(self._transport)
 
     def health(self) -> dict:
         return self._transport.request("GET", "/health", auth=False)

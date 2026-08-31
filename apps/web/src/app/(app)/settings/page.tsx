@@ -39,6 +39,14 @@ export default function SettingsPage() {
             </CardHeader>
           </Card>
         </Link>
+        <Link href="/settings/governance/data-protection">
+          <Card className="transition-colors hover:bg-[var(--muted)]/40">
+            <CardHeader>
+              <CardTitle className="text-base">Data protection</CardTitle>
+              <CardDescription>PII, secrets, redaction, local vs cloud</CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
       </div>
 
       <Card>

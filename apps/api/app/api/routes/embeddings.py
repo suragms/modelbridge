@@ -39,4 +39,7 @@ async def create_embeddings(
     )
     request.state.rate_limit_headers = rate_headers
     cache_policy = parse_cache_policy(request.headers.get("X-ModelBridge-Cache-Policy"))
-    return await execute_embeddings(payload, db, user, api_key, cache_policy=cache_policy)
+    approval_id = request.headers.get("X-ModelBridge-Approval-ID")
+    return await execute_embeddings(
+        payload, db, user, api_key, cache_policy=cache_policy, approval_id=approval_id
+    )

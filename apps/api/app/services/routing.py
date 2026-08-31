@@ -21,6 +21,8 @@ from app.models.model import Model
 from app.models.provider import Provider, ProviderCredential
 from app.models.routing import RoutingPolicy
 from app.router.engine import CandidateModel, RoutingEngine
+from app.services.governance.engine import GovernanceRestrictions, candidate_allowed
+from app.services.governance.pipeline import LOCAL_PROVIDER_TYPES
 
 
 @dataclass
@@ -79,6 +81,7 @@ class RouteService:
         strategy: str | None = None,
         request_count: int | None = None,
         org_id: uuid.UUID | None = None,
+        restrictions: GovernanceRestrictions | None = None,
     ) -> RoutePlan:
         """Build an ordered target chain for a request."""
         required = required_capabilities or {"chat"}
@@ -93,6 +96,21 @@ class RouteService:
             targets = await self._plan_specific(
                 requested_model, required, strategy, policy_config, org_id
             )
+
+        if restrictions:
+            filtered: list[RouteTarget] = []
+            for target in targets:
+                is_local = str(target.provider.type) in LOCAL_PROVIDER_TYPES
+                ok, _ = candidate_allowed(
+                    model_id=target.resolved_model,
+                    provider_name=target.provider.name,
+                    provider_type=str(target.provider.type),
+                    is_local=is_local,
+                    restrictions=restrictions,
+                )
+                if ok:
+                    filtered.append(target)
+            targets = filtered
 
         return RoutePlan(
             targets=targets,

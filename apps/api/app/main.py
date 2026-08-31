@@ -10,18 +10,21 @@ from fastapi.responses import JSONResponse, Response
 from sqlalchemy import text
 
 from app.api.routes import (
+    agents_router,
     analytics_router,
     api_keys_router,
     audit_router,
     auth_router,
     chat_router,
     embeddings_router,
+    governance_router,
     logs_router,
     models_router,
     organizations_router,
     playground_router,
     providers_router,
     routing_router,
+    workflows_router,
 )
 from app.config import get_settings, validate_production_settings
 from app.db.base import engine
@@ -135,6 +138,9 @@ app.include_router(logs_router)
 app.include_router(analytics_router)
 app.include_router(routing_router)
 app.include_router(audit_router)
+app.include_router(governance_router)
+app.include_router(agents_router)
+app.include_router(workflows_router)
 
 
 async def _check_database() -> bool:
