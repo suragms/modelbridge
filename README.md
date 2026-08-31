@@ -76,6 +76,15 @@ Switching between AI providers means rewriting code, juggling API keys, and mana
   - Extension administration UI and template gallery
   - Extension SDK interfaces, CLI commands, and reference hello-tool extension
   - Plugin observability metrics and audit events
+- **Enterprise Collaboration**
+  - Team workspaces with membership and RBAC integration
+  - Projects with optional restricted access
+  - Development, staging, and production environments
+  - Configuration versioning, comparison, promotion, and rollback
+  - Activity timelines for workspaces and projects
+  - Fleet management with instance registration and heartbeats
+  - Control-plane APIs for configuration and policy distribution
+  - Enterprise and fleet dashboards
 - **Developer Platform (Phase 6)**
   - Official CLI (`modelbridge`) — chat, embeddings, analytics, org management
   - Python SDK (`modelbridge-sdk`) with sync/async and streaming

@@ -29,6 +29,10 @@ class Permission(StrEnum):
     AGENTS_EXECUTE = "agents.execute"
     EXTENSIONS_READ = "extensions.read"
     EXTENSIONS_MANAGE = "extensions.manage"
+    ENTERPRISE_READ = "enterprise.read"
+    ENTERPRISE_MANAGE = "enterprise.manage"
+    FLEET_READ = "fleet.read"
+    FLEET_MANAGE = "fleet.manage"
 
 
 ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
@@ -50,6 +54,10 @@ ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
         Permission.AGENTS_EXECUTE,
         Permission.EXTENSIONS_READ,
         Permission.EXTENSIONS_MANAGE,
+        Permission.ENTERPRISE_READ,
+        Permission.ENTERPRISE_MANAGE,
+        Permission.FLEET_READ,
+        Permission.FLEET_MANAGE,
     }),
     OrganizationRole.MEMBER: frozenset({
         Permission.PLAYGROUND_USE,
@@ -59,6 +67,8 @@ ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
         Permission.AGENTS_READ,
         Permission.AGENTS_EXECUTE,
         Permission.EXTENSIONS_READ,
+        Permission.ENTERPRISE_READ,
+        Permission.FLEET_READ,
     }),
     OrganizationRole.VIEWER: frozenset({
         Permission.ANALYTICS_READ,
@@ -66,6 +76,8 @@ ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
         Permission.GOVERNANCE_READ,
         Permission.AGENTS_READ,
         Permission.EXTENSIONS_READ,
+        Permission.ENTERPRISE_READ,
+        Permission.FLEET_READ,
     }),
 }
 

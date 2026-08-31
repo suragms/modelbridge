@@ -755,3 +755,98 @@ export function useTemplates(pluginType?: string) {
     enabled: Boolean(token && orgId),
   });
 }
+
+// ---- Enterprise -----------------------------------------------------------
+
+export function useEnterpriseOverview() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["enterprise-overview", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/enterprise/overview", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useWorkspaces() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["workspaces", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/workspaces", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useWorkspace(id: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["workspace", orgId, id],
+    queryFn: () =>
+      api.get<Record<string, unknown>>(`/workspaces/${id}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId && id),
+  });
+}
+
+export function useProjects(workspaceId?: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  const qs = workspaceId ? `?workspace_id=${workspaceId}` : "";
+  return useQuery({
+    queryKey: ["projects", orgId, workspaceId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>(`/projects${qs}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useProject(id: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["project", orgId, id],
+    queryFn: () =>
+      api.get<Record<string, unknown>>(`/projects/${id}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId && id),
+  });
+}
+
+export function useEnvironments(projectId: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["environments", orgId, projectId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>(
+        `/projects/${projectId}/environments`,
+        token ?? undefined,
+        orgId ?? undefined
+      ),
+    enabled: Boolean(token && orgId && projectId),
+  });
+}
+
+export function useFleet() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["fleet", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/fleet", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useFleetInstance(id: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["fleet-instance", orgId, id],
+    queryFn: () =>
+      api.get<Record<string, unknown>>(`/fleet/${id}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId && id),
+  });
+}

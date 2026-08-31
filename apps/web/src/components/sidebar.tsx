@@ -15,6 +15,8 @@ import {
   Workflow,
   Layers,
   Puzzle,
+  Building2,
+  Network,
   Server,
   ShieldCheck,
   Settings as SettingsIcon,
@@ -38,6 +40,8 @@ const NAV_ITEMS = [
   { href: "/workflows", label: "Workflows", icon: Workflow },
   { href: "/extensions", label: "Extensions", icon: Puzzle },
   { href: "/templates", label: "Templates", icon: Layers },
+  { href: "/enterprise", label: "Enterprise", icon: Building2 },
+  { href: "/fleet", label: "Fleet", icon: Network },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 

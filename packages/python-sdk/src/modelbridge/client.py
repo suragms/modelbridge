@@ -216,6 +216,26 @@ class TemplatesAPI:
         )
 
 
+class EnterpriseAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def overview(self) -> dict:
+        return self._transport.request("GET", "/enterprise/overview", use_token=True)
+
+    def workspaces(self) -> list:
+        return self._transport.request("GET", "/workspaces", use_token=True)
+
+    def projects(self, **params: Any) -> list:
+        return self._transport.request("GET", "/projects", params=params, use_token=True)
+
+    def fleet(self) -> dict:
+        return self._transport.request("GET", "/fleet", use_token=True)
+
+    def fleet_instance(self, instance_id: str) -> dict:
+        return self._transport.request("GET", f"/fleet/{instance_id}", use_token=True)
+
+
 class ModelBridge:
     """Synchronous ModelBridge client."""
 
@@ -238,6 +258,7 @@ class ModelBridge:
         self.workflows = WorkflowsAPI(self._transport)
         self.extensions = ExtensionsAPI(self._transport)
         self.templates = TemplatesAPI(self._transport)
+        self.enterprise = EnterpriseAPI(self._transport)
 
     def health(self) -> dict:
         return self._transport.request("GET", "/health", auth=False)

@@ -17,6 +17,13 @@ from app.api.routes.extensions import router as extensions_router
 from app.api.routes.templates import router as templates_router
 from app.api.routes.workflows import router as workflows_router
 
+from app.api.routes.enterprise import router as enterprise_router
+from app.api.routes.fleet import control_router as control_plane_router
+from app.api.routes.fleet import router as fleet_router
+from app.api.routes.projects import env_router as environments_router
+from app.api.routes.projects import router as projects_router
+from app.api.routes.workspaces import router as workspaces_router
+
 __all__ = [
     "auth_router",
     "providers_router",
@@ -35,4 +42,10 @@ __all__ = [
     "workflows_router",
     "extensions_router",
     "templates_router",
+    "workspaces_router",
+    "projects_router",
+    "environments_router",
+    "enterprise_router",
+    "fleet_router",
+    "control_plane_router",
 ]

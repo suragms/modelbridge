@@ -27,6 +27,12 @@ from app.api.routes import (
     routing_router,
     workflows_router,
     templates_router,
+    workspaces_router,
+    projects_router,
+    environments_router,
+    enterprise_router,
+    fleet_router,
+    control_plane_router,
 )
 from app.config import get_settings, validate_production_settings
 from app.db.base import async_session_factory, engine
@@ -154,6 +160,12 @@ app.include_router(agents_router)
 app.include_router(workflows_router)
 app.include_router(extensions_router)
 app.include_router(templates_router)
+app.include_router(workspaces_router)
+app.include_router(projects_router)
+app.include_router(environments_router)
+app.include_router(enterprise_router)
+app.include_router(fleet_router)
+app.include_router(control_plane_router)
 
 
 async def _check_database() -> bool:

@@ -592,5 +592,45 @@ def templates_list(
     _print_json(data, json_out)
 
 
+workspaces_app = typer.Typer(help="Workspace commands")
+projects_app = typer.Typer(help="Project commands")
+fleet_app = typer.Typer(help="Fleet commands")
+app.add_typer(workspaces_app, name="workspaces")
+app.add_typer(projects_app, name="projects")
+app.add_typer(fleet_app, name="fleet")
+
+
+@workspaces_app.command("list")
+def workspaces_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/workspaces", dashboard=True)
+    _print_json(data, json_out)
+
+
+@projects_app.command("list")
+def projects_list(
+    workspace_id: Optional[str] = typer.Option(None, "--workspace-id"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    params = {"workspace_id": workspace_id} if workspace_id else None
+    data = client.get("/projects", dashboard=True, params=params)
+    _print_json(data, json_out)
+
+
+@fleet_app.command("list")
+def fleet_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/fleet", dashboard=True)
+    _print_json(data, json_out)
+
+
+@fleet_app.command("status")
+def fleet_status(instance_id: str, json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get(f"/fleet/{instance_id}", dashboard=True)
+    _print_json(data, json_out)
+
+
 if __name__ == "__main__":
     app()

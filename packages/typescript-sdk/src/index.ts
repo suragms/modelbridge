@@ -255,4 +255,32 @@ export class ModelBridge {
       return parseResponse(res);
     },
   };
+
+  enterprise = {
+    overview: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/enterprise/overview`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    workspaces: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/workspaces`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    projects: async (params?: Record<string, string>): Promise<unknown> => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      const res = await fetch(`${this.baseURL}/projects${qs}`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    fleet: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/fleet`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+  };
 }

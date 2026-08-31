@@ -122,6 +122,29 @@ EXTENSION_FAILURES = Counter(
     ["plugin_type"],
 )
 
+INSTANCES_TOTAL = Counter(
+    "modelbridge_instances_total",
+    "Managed instance events",
+    ["event"],
+)
+
+INSTANCE_HEARTBEATS = Counter(
+    "modelbridge_instance_heartbeats_total",
+    "Instance heartbeats",
+    ["status"],
+)
+
+CONFIG_DEPLOYMENTS = Counter(
+    "modelbridge_configuration_deployments_total",
+    "Configuration deployments",
+    ["status"],
+)
+
+CONFIG_DEPLOYMENT_FAILURES = Counter(
+    "modelbridge_configuration_deployment_failures_total",
+    "Failed configuration deployments",
+)
+
 
 def record_cache_event(event: str, endpoint: str) -> None:
     """Record cache hit/miss/write/bypass/error."""
@@ -162,6 +185,16 @@ def record_workflow_execution(status: str) -> None:
 
 def record_extension_event(event: str, plugin_type: str) -> None:
     EXTENSION_EVENTS.labels(event=event[:20], plugin_type=plugin_type[:20]).inc()
+
+
+def record_instance_heartbeat(status: str) -> None:
+    INSTANCE_HEARTBEATS.labels(status=status[:20]).inc()
+
+
+def record_config_deployment(status: str, *, failed: bool = False) -> None:
+    CONFIG_DEPLOYMENTS.labels(status=status[:20]).inc()
+    if failed:
+        CONFIG_DEPLOYMENT_FAILURES.inc()
 
 
 def record_request(
