@@ -770,5 +770,59 @@ def automations_list(json_out: bool = typer.Option(False, "--json")):
     _print_json(data, json_out)
 
 
+marketplace_app = typer.Typer(help="Marketplace commands")
+app.add_typer(marketplace_app, name="marketplace")
+
+
+@marketplace_app.command("search")
+def marketplace_search(
+    query: str = typer.Option(None, "--query", "-q"),
+    content_type: str = typer.Option(None, "--type"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    params = {}
+    if query:
+        params["q"] = query
+    if content_type:
+        params["content_type"] = content_type
+    data = client.get("/marketplace/items", dashboard=True, params=params or None)
+    _print_json(data, json_out)
+
+
+@marketplace_app.command("list")
+def marketplace_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/marketplace/items", dashboard=True)
+    _print_json(data, json_out)
+
+
+@marketplace_app.command("info")
+def marketplace_info(slug: str, json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get(f"/marketplace/items/{slug}", dashboard=True)
+    _print_json(data, json_out)
+
+
+@marketplace_app.command("install")
+def marketplace_install(
+    slug: str,
+    permissions: str = typer.Option("", "--permissions", help="Comma-separated permissions to approve"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    info = client.get(f"/marketplace/items/{slug}", dashboard=True)
+    item_id = info["id"]
+    perms = [p.strip() for p in permissions.split(",") if p.strip()] if permissions else []
+    if not perms and info.get("current_version"):
+        perms = info["current_version"].get("permissions", [])
+    data = client.post(
+        f"/marketplace/items/{item_id}/install",
+        {"approved_permissions": perms, "enable": True},
+        dashboard=True,
+    )
+    _print_json(data, json_out)
+
+
 if __name__ == "__main__":
     app()

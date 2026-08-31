@@ -43,6 +43,9 @@ from app.api.routes import (
     integrations_router,
     automations_router,
     developer_router,
+    marketplace_router,
+    publishers_router,
+    marketplace_admin_router,
 )
 from app.config import get_settings, validate_production_settings
 from app.db.base import async_session_factory, engine
@@ -69,6 +72,9 @@ async def lifespan(app: FastAPI):
     try:
         async with async_session_factory() as db:
             await seed_official_packages(db)
+            from app.services.marketplace.seed import seed_marketplace_items
+
+            await seed_marketplace_items(db)
             from app.services.cloud.regions import RegionService
             from app.services.cloud.discovery import ServiceDiscovery
             from app.config import get_settings
@@ -202,6 +208,9 @@ app.include_router(webhooks_router)
 app.include_router(integrations_router)
 app.include_router(automations_router)
 app.include_router(developer_router)
+app.include_router(marketplace_router)
+app.include_router(publishers_router)
+app.include_router(marketplace_admin_router)
 
 
 async def _check_database() -> bool:

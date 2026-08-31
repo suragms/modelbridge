@@ -52,6 +52,8 @@ const NAV_ITEMS = [
   { href: "/webhooks", label: "Webhooks", icon: Webhook },
   { href: "/integrations", label: "Integrations", icon: Plug },
   { href: "/automations", label: "Automations", icon: Zap },
+  { href: "/marketplace", label: "Marketplace", icon: Layers },
+  { href: "/community/contribute", label: "Contribute", icon: Code2 },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 

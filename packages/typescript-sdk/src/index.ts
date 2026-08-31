@@ -416,4 +416,28 @@ export class ModelBridge {
       return parseResponse(res);
     },
   };
+
+  marketplace = {
+    discovery: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/marketplace/discovery`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    search: async (params?: Record<string, string>): Promise<unknown> => {
+      const qs = params ? `?${new URLSearchParams(params)}` : "";
+      const res = await fetch(`${this.baseURL}/marketplace/items${qs}`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    get: async (slug: string): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/marketplace/items/${slug}`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    install: async (itemId: string, body: { approved_permissions: string[]; enable?: boolean }): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/marketplace/items/${itemId}/install`, {
+        method: "POST",
+        headers: headers(this.opts, true),
+        body: JSON.stringify(body),
+      });
+      return parseResponse(res);
+    },
+  };
 }

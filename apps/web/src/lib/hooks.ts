@@ -1039,3 +1039,39 @@ export function useAutomations() {
     enabled: Boolean(token && orgId),
   });
 }
+
+// ---- Marketplace ------------------------------------------------------------
+
+export function useMarketplaceDiscovery() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["marketplace-discovery", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/marketplace/discovery", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useMarketplaceItems(params?: Record<string, string>) {
+  const token = useToken();
+  const orgId = useOrgId();
+  const qs = params ? `?${new URLSearchParams(params).toString()}` : "";
+  return useQuery({
+    queryKey: ["marketplace-items", orgId, params],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>(`/marketplace/items${qs}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useMarketplaceItem(slug: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["marketplace-item", slug, orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>(`/marketplace/items/${slug}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId && slug),
+  });
+}

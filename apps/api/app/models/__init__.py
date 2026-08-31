@@ -84,6 +84,18 @@ from app.models.cloud import (
     UsageEventType,
     UsageMeterEvent,
 )
+from app.models.marketplace import (
+    MarketplaceAnalyticsEvent,
+    MarketplaceContentType,
+    MarketplaceInstallHistory,
+    MarketplaceItem,
+    MarketplaceItemStatus,
+    MarketplaceReport,
+    MarketplaceReview,
+    MarketplaceSubmission,
+    MarketplaceVisibility,
+    MARKETPLACE_CATEGORIES,
+)
 from app.models.platform import (
     Automation,
     AutomationExecution,
@@ -240,4 +252,14 @@ __all__ = [
     "AutomationStatus",
     "AutomationExecutionStatus",
     "SubscriptionTarget",
+    "MarketplaceItem",
+    "MarketplaceSubmission",
+    "MarketplaceReview",
+    "MarketplaceReport",
+    "MarketplaceInstallHistory",
+    "MarketplaceAnalyticsEvent",
+    "MarketplaceContentType",
+    "MarketplaceItemStatus",
+    "MarketplaceVisibility",
+    "MARKETPLACE_CATEGORIES",
 ]

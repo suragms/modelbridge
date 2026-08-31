@@ -44,6 +44,9 @@ class Permission(StrEnum):
     WEBHOOKS_MANAGE = "webhooks.manage"
     INTEGRATIONS_MANAGE = "integrations.manage"
     AUTOMATIONS_MANAGE = "automations.manage"
+    MARKETPLACE_READ = "marketplace.read"
+    MARKETPLACE_PUBLISH = "marketplace.publish"
+    MARKETPLACE_ADMIN = "marketplace.admin"
 
 
 ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
@@ -80,6 +83,9 @@ ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
         Permission.WEBHOOKS_MANAGE,
         Permission.INTEGRATIONS_MANAGE,
         Permission.AUTOMATIONS_MANAGE,
+        Permission.MARKETPLACE_READ,
+        Permission.MARKETPLACE_PUBLISH,
+        Permission.MARKETPLACE_ADMIN,
     }),
     OrganizationRole.MEMBER: frozenset({
         Permission.PLAYGROUND_USE,
@@ -95,6 +101,7 @@ ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
         Permission.USAGE_READ,
         Permission.INTELLIGENCE_READ,
         Permission.EVENTS_READ,
+        Permission.MARKETPLACE_READ,
     }),
     OrganizationRole.VIEWER: frozenset({
         Permission.ANALYTICS_READ,
@@ -108,6 +115,7 @@ ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
         Permission.USAGE_READ,
         Permission.INTELLIGENCE_READ,
         Permission.EVENTS_READ,
+        Permission.MARKETPLACE_READ,
     }),
 }
 

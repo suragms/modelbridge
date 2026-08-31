@@ -221,6 +221,29 @@ INTEGRATION_REQUESTS = Counter(
     ["provider", "status"],
 )
 
+MARKETPLACE_ITEMS = Counter(
+    "modelbridge_marketplace_items_total",
+    "Marketplace item events",
+    ["content_type", "status"],
+)
+
+MARKETPLACE_INSTALLATIONS = Counter(
+    "modelbridge_marketplace_installations_total",
+    "Marketplace installations",
+    ["content_type"],
+)
+
+MARKETPLACE_VALIDATION_FAILURES = Counter(
+    "modelbridge_marketplace_validation_failures_total",
+    "Marketplace package validation failures",
+)
+
+MARKETPLACE_PUBLICATIONS = Counter(
+    "modelbridge_marketplace_publications_total",
+    "Marketplace publications",
+    ["content_type"],
+)
+
 
 def record_cache_event(event: str, endpoint: str) -> None:
     """Record cache hit/miss/write/bypass/error."""
@@ -318,6 +341,18 @@ def record_webhook_retry() -> None:
 
 def record_integration_request(*, provider: str, status: str) -> None:
     INTEGRATION_REQUESTS.labels(provider=provider[:20], status=status[:20]).inc()
+
+
+def record_marketplace_installation(*, content_type: str) -> None:
+    MARKETPLACE_INSTALLATIONS.labels(content_type=content_type[:20]).inc()
+
+
+def record_marketplace_validation_failure() -> None:
+    MARKETPLACE_VALIDATION_FAILURES.inc()
+
+
+def record_marketplace_publication(*, content_type: str) -> None:
+    MARKETPLACE_PUBLICATIONS.labels(content_type=content_type[:20]).inc()
 
 
 def record_request(

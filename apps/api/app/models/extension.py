@@ -65,6 +65,10 @@ class ExtensionPublisher(Base):
     slug: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     homepage: Mapped[str | None] = mapped_column(String(512))
+    description: Mapped[str | None] = mapped_column(Text)
+    website: Mapped[str | None] = mapped_column(String(512))
+    status: Mapped[str] = mapped_column(String(20), default="active")
+    verification_status: Mapped[str] = mapped_column(String(20), default="unverified")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
 

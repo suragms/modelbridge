@@ -365,6 +365,40 @@ class AutomationsAPI:
         )
 
 
+class MarketplaceAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def discovery(self) -> dict:
+        return self._transport.request("GET", "/marketplace/discovery", use_token=True)
+
+    def search(self, **params: Any) -> list:
+        return self._transport.request("GET", "/marketplace/items", params=params, use_token=True)
+
+    def get(self, slug: str) -> dict:
+        return self._transport.request("GET", f"/marketplace/items/{slug}", use_token=True)
+
+    def install(self, item_id: str, *, approved_permissions: list[str], enable: bool = True) -> dict:
+        return self._transport.request(
+            "POST",
+            f"/marketplace/items/{item_id}/install",
+            json_body={"approved_permissions": approved_permissions, "enable": enable},
+            use_token=True,
+        )
+
+    def publish(self, manifest: dict, *, publisher_slug: str, publisher_name: str) -> dict:
+        return self._transport.request(
+            "POST",
+            "/marketplace/items",
+            json_body={
+                "manifest": manifest,
+                "publisher_slug": publisher_slug,
+                "publisher_name": publisher_name,
+            },
+            use_token=True,
+        )
+
+
 class ModelBridge:
     """Synchronous ModelBridge client."""
 
@@ -395,6 +429,7 @@ class ModelBridge:
         self.webhooks = WebhooksAPI(self._transport)
         self.integrations = IntegrationsAPI(self._transport)
         self.automations = AutomationsAPI(self._transport)
+        self.marketplace = MarketplaceAPI(self._transport)
 
     def health(self) -> dict:
         return self._transport.request("GET", "/health", auth=False)

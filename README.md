@@ -113,6 +113,16 @@ Switching between AI providers means rewriting code, juggling API keys, and mana
   - Scoped API keys with rotation and last-used tracking
   - Developer portal (`/developers`), webhooks, integrations, and automations dashboards
   - CLI and SDK support for events, webhooks, integrations, automations
+- **Marketplace & Community (Phase 15)**
+  - Marketplace catalog built on the extension registry
+  - Publisher profiles with verification states (unverified, verified, official)
+  - Publishing workflow with automated validation and admin review
+  - Version management and compatibility checks
+  - Workflow, agent, integration, and template discovery
+  - Installation tracking with history, updates, and rollback
+  - Reviews, reporting, and moderation architecture
+  - Marketplace dashboard (`/marketplace`) and contributor guide (`/community/contribute`)
+  - CLI and SDK marketplace commands
 - **Developer Platform (Phase 6)**
   - Official CLI (`modelbridge`) — chat, embeddings, analytics, org management
   - Python SDK (`modelbridge-sdk`) with sync/async and streaming
