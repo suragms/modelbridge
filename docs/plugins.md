@@ -2,14 +2,18 @@
 
 ModelBridge supports **trusted provider plugins** installed by administrators.
 
+> Phase 10 adds the full extension ecosystem (manifests, registry, templates, permissions). See [extensions.md](./extensions.md).
+
 ## Plugin Types
 
 | Category | Status |
 |----------|--------|
 | Provider plugins | Implemented |
+| Tool extensions | Implemented (manifest + trusted handlers) |
+| Agent/workflow templates | Implemented |
+| Integration extensions | Architecture + manifest type |
 | Auth plugins | Planned |
 | Routing plugins | Planned |
-| Observability plugins | Planned |
 
 ## Provider Plugin Interface
 
