@@ -707,3 +707,51 @@ export function useWorkflowExecution(id: string) {
     enabled: Boolean(token && orgId && id),
   });
 }
+
+// ---- Extensions -----------------------------------------------------------
+
+export function useExtensionPackages(params?: Record<string, string>) {
+  const token = useToken();
+  const orgId = useOrgId();
+  const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+  return useQuery({
+    queryKey: ["extension-packages", orgId, params],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>(`/extensions/packages${qs}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useExtensionInstallations() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["extension-installations", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/extensions/installations", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useExtensionInstallation(id: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["extension-installation", orgId, id],
+    queryFn: () =>
+      api.get<Record<string, unknown>>(`/extensions/installations/${id}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId && id),
+  });
+}
+
+export function useTemplates(pluginType?: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  const qs = pluginType ? `?plugin_type=${pluginType}` : "";
+  return useQuery({
+    queryKey: ["templates", orgId, pluginType],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>(`/templates${qs}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}

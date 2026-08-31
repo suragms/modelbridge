@@ -1,0 +1,30 @@
+{
+  "name": "hello-tool",
+  "display_name": "Hello Tool Extension",
+  "description": "Reference tool extension demonstrating manifest, permissions, and lifecycle.",
+  "version": "1.0.0",
+  "plugin_type": "tool",
+  "author": "ModelBridge",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/suragms/modelbridge",
+  "minimum_modelbridge_version": "1.0.0",
+  "permissions": ["tool_execution"],
+  "capabilities": ["greeting"],
+  "configuration_schema": {
+    "type": "object",
+    "properties": {
+      "default_name": { "type": "string", "default": "world" }
+    }
+  },
+  "tool": {
+    "name": "hello",
+    "description": "Returns a greeting",
+    "input_schema": {
+      "type": "object",
+      "properties": { "name": { "type": "string" } },
+      "required": ["name"]
+    },
+    "risk_level": "low"
+  },
+  "entry_point": "modelbridge_hello_tool:HelloToolPlugin"
+}

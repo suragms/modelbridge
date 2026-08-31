@@ -15,6 +15,17 @@ from app.models.agent import (
     WorkflowStatus,
     WorkflowTrigger,
 )
+from app.models.extension import (
+    ExtensionConfiguration,
+    ExtensionInstallation,
+    ExtensionPackage,
+    ExtensionPackageVersion,
+    ExtensionPublisher,
+    ExtensionRegistry,
+    InstallationStatus,
+    PluginType,
+    TrustLevel,
+)
 from app.models.api_key import APIKey, ALL_API_KEY_SCOPES, DEFAULT_API_KEY_SCOPES
 from app.models.audit import AuditLog
 from app.models.budget_alert import BudgetAlert
@@ -82,4 +93,13 @@ __all__ = [
     "WorkflowSchedule",
     "WorkflowTrigger",
     "WorkflowStatus",
+    "ExtensionRegistry",
+    "ExtensionPublisher",
+    "ExtensionPackage",
+    "ExtensionPackageVersion",
+    "ExtensionInstallation",
+    "ExtensionConfiguration",
+    "PluginType",
+    "TrustLevel",
+    "InstallationStatus",
 ]

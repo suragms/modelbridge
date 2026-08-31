@@ -172,6 +172,50 @@ class WorkflowsAPI:
         return self._transport.request("GET", "/workflows/executions/list", params=params, use_token=True)
 
 
+class ExtensionsAPI:
+    """Extension marketplace APIs (dashboard token required)."""
+
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def packages(self, **params: Any) -> list:
+        return self._transport.request("GET", "/extensions/packages", params=params, use_token=True)
+
+    def installations(self) -> list:
+        return self._transport.request("GET", "/extensions/installations", use_token=True)
+
+    def install(self, package_version_id: str, *, approved_permissions: list[str], enable: bool = False, **kwargs: Any) -> dict:
+        body = {
+            "package_version_id": package_version_id,
+            "approved_permissions": approved_permissions,
+            "enable": enable,
+            **kwargs,
+        }
+        return self._transport.request("POST", "/extensions/installations", json_body=body, use_token=True)
+
+    def enable(self, installation_id: str) -> dict:
+        return self._transport.request("POST", f"/extensions/installations/{installation_id}/enable", json_body={}, use_token=True)
+
+    def disable(self, installation_id: str) -> dict:
+        return self._transport.request("POST", f"/extensions/installations/{installation_id}/disable", json_body={}, use_token=True)
+
+
+class TemplatesAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def list(self, **params: Any) -> list:
+        return self._transport.request("GET", "/templates", params=params, use_token=True)
+
+    def apply(self, installation_id: str, parameters: dict | None = None, activate: bool = False) -> dict:
+        return self._transport.request(
+            "POST",
+            f"/templates/installations/{installation_id}/apply",
+            json_body={"parameters": parameters or {}, "activate": activate},
+            use_token=True,
+        )
+
+
 class ModelBridge:
     """Synchronous ModelBridge client."""
 
@@ -192,6 +236,8 @@ class ModelBridge:
         self.governance = GovernanceAPI(self._transport)
         self.agents = AgentsAPI(self._transport)
         self.workflows = WorkflowsAPI(self._transport)
+        self.extensions = ExtensionsAPI(self._transport)
+        self.templates = TemplatesAPI(self._transport)
 
     def health(self) -> dict:
         return self._transport.request("GET", "/health", auth=False)

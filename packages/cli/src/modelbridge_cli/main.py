@@ -49,6 +49,10 @@ workflows_app = typer.Typer(help="Workflow commands")
 app.add_typer(agents_app, name="agents")
 agents_app.add_typer(executions_app, name="executions")
 app.add_typer(workflows_app, name="workflows")
+extensions_app = typer.Typer(help="Extension commands")
+templates_app = typer.Typer(help="Template gallery commands")
+app.add_typer(extensions_app, name="extensions")
+app.add_typer(templates_app, name="templates")
 
 console = Console()
 
@@ -521,6 +525,70 @@ def workflows_execute(
         {"sync": sync},
         dashboard=True,
     )
+    _print_json(data, json_out)
+
+
+@extensions_app.command("list")
+def extensions_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/extensions/installations", dashboard=True)
+    _print_json(data, json_out)
+
+
+@extensions_app.command("packages")
+def extensions_packages(
+    json_out: bool = typer.Option(False, "--json"),
+    plugin_type: Optional[str] = typer.Option(None, "--type"),
+):
+    client = CLIClient()
+    params = {"plugin_type": plugin_type} if plugin_type else None
+    data = client.get("/extensions/packages", dashboard=True, params=params)
+    _print_json(data, json_out)
+
+
+@extensions_app.command("install")
+def extensions_install(
+    package_version_id: str,
+    permissions: str = typer.Option("", "--permissions", help="Comma-separated approved permissions"),
+    enable: bool = typer.Option(False, "--enable"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    perms = [p.strip() for p in permissions.split(",") if p.strip()]
+    data = client.post(
+        "/extensions/installations",
+        {
+            "package_version_id": package_version_id,
+            "approved_permissions": perms,
+            "enable": enable,
+        },
+        dashboard=True,
+    )
+    _print_json(data, json_out)
+
+
+@extensions_app.command("enable")
+def extensions_enable(installation_id: str, json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.post(f"/extensions/installations/{installation_id}/enable", {}, dashboard=True)
+    _print_json(data, json_out)
+
+
+@extensions_app.command("disable")
+def extensions_disable(installation_id: str, json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.post(f"/extensions/installations/{installation_id}/disable", {}, dashboard=True)
+    _print_json(data, json_out)
+
+
+@templates_app.command("list")
+def templates_list(
+    json_out: bool = typer.Option(False, "--json"),
+    plugin_type: Optional[str] = typer.Option(None, "--type"),
+):
+    client = CLIClient()
+    params = {"plugin_type": plugin_type} if plugin_type else None
+    data = client.get("/templates", dashboard=True, params=params)
     _print_json(data, json_out)
 
 

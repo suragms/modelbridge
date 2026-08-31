@@ -17,6 +17,7 @@ from app.api.routes import (
     auth_router,
     chat_router,
     embeddings_router,
+    extensions_router,
     governance_router,
     logs_router,
     models_router,
@@ -25,9 +26,12 @@ from app.api.routes import (
     providers_router,
     routing_router,
     workflows_router,
+    templates_router,
 )
 from app.config import get_settings, validate_production_settings
-from app.db.base import engine
+from app.db.base import async_session_factory, engine
+from app.services.extensions.registry import seed_official_packages
+from app.services.extensions.tools import init_reference_tools
 from app.services.metrics import metrics_response
 from app.services.redis_client import close_redis
 
@@ -45,6 +49,13 @@ async def lifespan(app: FastAPI):
     if errors:
         for err in errors:
             logger.warning("config_validation_warning", error=err)
+    init_reference_tools()
+    try:
+        async with async_session_factory() as db:
+            await seed_official_packages(db)
+            await db.commit()
+    except Exception as e:
+        logger.warning("extension_seed_skipped", error=str(e))
     yield
     await close_redis()
 
@@ -141,6 +152,8 @@ app.include_router(audit_router)
 app.include_router(governance_router)
 app.include_router(agents_router)
 app.include_router(workflows_router)
+app.include_router(extensions_router)
+app.include_router(templates_router)
 
 
 async def _check_database() -> bool:

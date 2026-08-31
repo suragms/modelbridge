@@ -110,6 +110,18 @@ WORKFLOW_EXECUTIONS = Counter(
     ["status"],
 )
 
+EXTENSION_EVENTS = Counter(
+    "modelbridge_extension_executions_total",
+    "Extension lifecycle and execution events",
+    ["event", "plugin_type"],
+)
+
+EXTENSION_FAILURES = Counter(
+    "modelbridge_extension_failures_total",
+    "Extension failures",
+    ["plugin_type"],
+)
+
 
 def record_cache_event(event: str, endpoint: str) -> None:
     """Record cache hit/miss/write/bypass/error."""
@@ -146,6 +158,10 @@ def record_agent_tool_call(tool_name: str, status: str) -> None:
 
 def record_workflow_execution(status: str) -> None:
     WORKFLOW_EXECUTIONS.labels(status=status[:30]).inc()
+
+
+def record_extension_event(event: str, plugin_type: str) -> None:
+    EXTENSION_EVENTS.labels(event=event[:20], plugin_type=plugin_type[:20]).inc()
 
 
 def record_request(

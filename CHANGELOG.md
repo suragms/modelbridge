@@ -8,6 +8,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- Phase 10 extension ecosystem: manifests, registry, lifecycle, permissions, templates, private registries, admin UI, CLI/SDK, metrics, and reference hello-tool extension
 - Phase 9 AI agent infrastructure: agent definitions, execution engine, tool registry, workflows, ARQ jobs, memory, observability, dashboard, CLI, and SDKs
 - Phase 8 AI governance: policy engine, allow/block lists, PII/secret detection, redaction, approvals, dashboard, CLI/SDK APIs, reports, and Prometheus governance metrics
 - Redis response-cache keys include policy fingerprints so policy changes cannot be bypassed by stale cache entries

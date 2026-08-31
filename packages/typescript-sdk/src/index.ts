@@ -229,4 +229,30 @@ export class ModelBridge {
       return parseResponse(res);
     },
   };
+
+  extensions = {
+    packages: async (params?: Record<string, string>): Promise<unknown> => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      const res = await fetch(`${this.baseURL}/extensions/packages${qs}`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    installations: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/extensions/installations`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+  };
+
+  templates = {
+    list: async (params?: Record<string, string>): Promise<unknown> => {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      const res = await fetch(`${this.baseURL}/templates${qs}`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+  };
 }

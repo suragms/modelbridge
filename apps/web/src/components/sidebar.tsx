@@ -13,6 +13,8 @@ import {
   LogOut,
   Bot,
   Workflow,
+  Layers,
+  Puzzle,
   Server,
   ShieldCheck,
   Settings as SettingsIcon,
@@ -34,6 +36,8 @@ const NAV_ITEMS = [
   { href: "/governance", label: "Governance", icon: ShieldCheck },
   { href: "/agents", label: "Agents", icon: Bot },
   { href: "/workflows", label: "Workflows", icon: Workflow },
+  { href: "/extensions", label: "Extensions", icon: Puzzle },
+  { href: "/templates", label: "Templates", icon: Layers },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 

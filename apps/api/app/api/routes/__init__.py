@@ -13,6 +13,8 @@ from app.api.routes.playground import router as playground_router
 from app.api.routes.providers import router as providers_router
 from app.api.routes.routing import router as routing_router
 
+from app.api.routes.extensions import router as extensions_router
+from app.api.routes.templates import router as templates_router
 from app.api.routes.workflows import router as workflows_router
 
 __all__ = [
@@ -31,4 +33,6 @@ __all__ = [
     "governance_router",
     "agents_router",
     "workflows_router",
+    "extensions_router",
+    "templates_router",
 ]

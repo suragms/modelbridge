@@ -67,6 +67,15 @@ Switching between AI providers means rewriting code, juggling API keys, and mana
   - Human-in-the-loop pauses for high-risk tools (Phase 8 approvals)
   - Agent memory (execution, session, agent scopes) and execution traces
   - Agent observability, cost tracking, dashboard, CLI, and SDKs
+- **ModelBridge Ecosystem**
+  - Extension architecture with validated manifests and semver
+  - Plugin lifecycle (install, enable, disable, uninstall) with explicit permissions
+  - Local/private registry and package search
+  - Provider, tool, integration, agent template, and workflow template types
+  - Trust levels (official, verified, community, unverified)
+  - Extension administration UI and template gallery
+  - Extension SDK interfaces, CLI commands, and reference hello-tool extension
+  - Plugin observability metrics and audit events
 - **Developer Platform (Phase 6)**
   - Official CLI (`modelbridge`) — chat, embeddings, analytics, org management
   - Python SDK (`modelbridge-sdk`) with sync/async and streaming
