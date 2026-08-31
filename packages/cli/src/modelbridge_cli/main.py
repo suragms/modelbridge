@@ -773,6 +773,61 @@ def automations_list(json_out: bool = typer.Option(False, "--json")):
 marketplace_app = typer.Typer(help="Marketplace commands")
 app.add_typer(marketplace_app, name="marketplace")
 
+studio_app = typer.Typer(help="AI Studio commands")
+studio_workflows_app = typer.Typer(help="Studio workflow commands")
+prompts_app = typer.Typer(help="Prompt template commands")
+evaluations_app = typer.Typer(help="Evaluation commands")
+app.add_typer(studio_app, name="studio")
+studio_app.add_typer(studio_workflows_app, name="workflows")
+app.add_typer(prompts_app, name="prompts")
+app.add_typer(evaluations_app, name="evaluations")
+
+
+@studio_app.command("overview")
+def studio_overview(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/studio/overview", dashboard=True)
+    _print_json(data, json_out)
+
+
+@studio_workflows_app.command("list")
+def studio_workflows_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/studio/workflows", dashboard=True)
+    _print_json(data, json_out)
+
+
+@prompts_app.command("list")
+def prompts_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/prompts/", dashboard=True)
+    _print_json(data, json_out)
+
+
+@prompts_app.command("test")
+def prompts_test(
+    prompt_id: str,
+    input_text: str = typer.Option("Hello", "--input", "-i"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    data = client.post(f"/prompts/{prompt_id}/test", {"input": input_text, "model": "auto"}, dashboard=True)
+    _print_json(data, json_out)
+
+
+@evaluations_app.command("run")
+def evaluations_run(suite_id: str, json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.post(f"/evaluations/{suite_id}/run", {}, dashboard=True)
+    _print_json(data, json_out)
+
+
+@evaluations_app.command("datasets")
+def evaluations_datasets(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/evaluations/datasets", dashboard=True)
+    _print_json(data, json_out)
+
 
 @marketplace_app.command("search")
 def marketplace_search(

@@ -365,6 +365,69 @@ class AutomationsAPI:
         )
 
 
+class StudioAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def overview(self) -> dict:
+        return self._transport.request("GET", "/studio/overview", use_token=True)
+
+    def list_workflows(self) -> list:
+        return self._transport.request("GET", "/studio/workflows", use_token=True)
+
+    def create_workflow(self, *, name: str, visual_definition: dict, description: str | None = None) -> dict:
+        body: dict[str, Any] = {"name": name, "visual_definition": visual_definition}
+        if description:
+            body["description"] = description
+        return self._transport.request("POST", "/studio/workflows", json_body=body, use_token=True)
+
+    def publish_workflow(self, workflow_id: str) -> dict:
+        return self._transport.request("POST", f"/studio/workflows/{workflow_id}/publish", use_token=True)
+
+    def list_agents(self) -> list:
+        return self._transport.request("GET", "/studio/agents", use_token=True)
+
+    def compare(self, *, messages: list[dict], models: list[str], **kwargs: Any) -> dict:
+        body: dict[str, Any] = {"messages": messages, "models": models, **kwargs}
+        return self._transport.request("POST", "/studio/compare", json_body=body, use_token=True)
+
+    def list_deployments(self) -> list:
+        return self._transport.request("GET", "/studio/deployments", use_token=True)
+
+
+class PromptsAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def list(self) -> list:
+        return self._transport.request("GET", "/prompts/", use_token=True)
+
+    def create(self, *, name: str, content: str, **kwargs: Any) -> dict:
+        body: dict[str, Any] = {"name": name, "content": content, **kwargs}
+        return self._transport.request("POST", "/prompts/", json_body=body, use_token=True)
+
+    def test(self, prompt_id: str, *, input: str, **kwargs: Any) -> dict:
+        body: dict[str, Any] = {"input": input, **kwargs}
+        return self._transport.request("POST", f"/prompts/{prompt_id}/test", json_body=body, use_token=True)
+
+
+class EvaluationsAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def list(self) -> list:
+        return self._transport.request("GET", "/evaluations/", use_token=True)
+
+    def list_datasets(self) -> list:
+        return self._transport.request("GET", "/evaluations/datasets", use_token=True)
+
+    def run(self, suite_id: str) -> dict:
+        return self._transport.request("POST", f"/evaluations/{suite_id}/run", use_token=True)
+
+    def get_run(self, run_id: str) -> dict:
+        return self._transport.request("GET", f"/evaluation-runs/{run_id}", use_token=True)
+
+
 class MarketplaceAPI:
     def __init__(self, transport: HTTPTransport):
         self._transport = transport
@@ -430,6 +493,9 @@ class ModelBridge:
         self.integrations = IntegrationsAPI(self._transport)
         self.automations = AutomationsAPI(self._transport)
         self.marketplace = MarketplaceAPI(self._transport)
+        self.studio = StudioAPI(self._transport)
+        self.prompts = PromptsAPI(self._transport)
+        self.evaluations = EvaluationsAPI(self._transport)
 
     def health(self) -> dict:
         return self._transport.request("GET", "/health", auth=False)

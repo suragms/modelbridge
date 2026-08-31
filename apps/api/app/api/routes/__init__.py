@@ -23,6 +23,12 @@ from app.api.routes.cloud import quotas_router
 from app.api.routes.cloud import usage_router
 from app.api.routes.intelligence import assistant_router as operations_assistant_router
 from app.api.routes.intelligence import router as intelligence_router
+from app.api.routes.studio import (
+    evaluation_runs_router,
+    evaluations_router,
+    prompts_router,
+    router as studio_router,
+)
 from app.api.routes.marketplace import admin_router as marketplace_admin_router
 from app.api.routes.marketplace import publishers_router
 from app.api.routes.marketplace import router as marketplace_router
@@ -74,6 +80,10 @@ __all__ = [
     "marketplace_router",
     "publishers_router",
     "marketplace_admin_router",
+    "studio_router",
+    "prompts_router",
+    "evaluations_router",
+    "evaluation_runs_router",
     "fleet_router",
     "control_plane_router",
 ]

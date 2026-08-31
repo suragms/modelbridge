@@ -1075,3 +1075,195 @@ export function useMarketplaceItem(slug: string) {
     enabled: Boolean(token && orgId && slug),
   });
 }
+
+// ---- AI Studio --------------------------------------------------------------
+
+export function useStudioOverview() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["studio-overview", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/studio/overview", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useStudioWorkflows() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["studio-workflows", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/studio/workflows", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useStudioWorkflow(id: string | null) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["studio-workflow", id, orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>(`/studio/workflows/${id}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId && id),
+  });
+}
+
+export function useCreateStudioWorkflow() {
+  const token = useToken();
+  const orgId = useOrgId();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { name: string; visual_definition: Record<string, unknown>; description?: string }) =>
+      api.post<Record<string, unknown>>("/studio/workflows", body, token ?? undefined, orgId ?? undefined),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["studio-workflows"] }),
+  });
+}
+
+export function usePublishStudioWorkflow() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: (workflowId: string) =>
+      api.post<Record<string, unknown>>(
+        `/studio/workflows/${workflowId}/publish`,
+        undefined,
+        token ?? undefined,
+        orgId ?? undefined
+      ),
+  });
+}
+
+export function useUpdateStudioWorkflow() {
+  const token = useToken();
+  const orgId = useOrgId();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: { visual_definition: Record<string, unknown>; change_summary?: string };
+    }) =>
+      api.patch<Record<string, unknown>>(
+        `/studio/workflows/${id}`,
+        body,
+        token ?? undefined,
+        orgId ?? undefined
+      ),
+    onSuccess: (_, vars) => {
+      client.invalidateQueries({ queryKey: ["studio-workflow", vars.id] });
+      client.invalidateQueries({ queryKey: ["studio-workflows"] });
+    },
+  });
+}
+
+export function useStudioAgents() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["studio-agents", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/studio/agents", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function usePrompts() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["prompts", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/prompts/", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useCreatePrompt() {
+  const token = useToken();
+  const orgId = useOrgId();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      name: string;
+      content: string;
+      description?: string;
+      tags?: string[];
+      change_notes?: string;
+    }) => api.post<Record<string, unknown>>("/prompts/", body, token ?? undefined, orgId ?? undefined),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["prompts"] }),
+  });
+}
+
+export function useTestPrompt() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: ({
+      id,
+      input,
+      variables,
+      model,
+    }: {
+      id: string;
+      input: string;
+      variables?: Record<string, string>;
+      model?: string;
+    }) =>
+      api.post<Record<string, unknown>>(
+        `/prompts/${id}/test`,
+        { input, variables, model: model ?? "auto" },
+        token ?? undefined,
+        orgId ?? undefined
+      ),
+  });
+}
+
+export function useStudioCompare() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: (body: {
+      messages: Array<{ role: string; content: string }>;
+      models: string[];
+      temperature?: number;
+    }) => api.post<Record<string, unknown>>("/studio/compare", body, token ?? undefined, orgId ?? undefined),
+  });
+}
+
+export function useEvaluationDatasets() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["evaluation-datasets", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/evaluations/datasets", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useEvaluationSuites() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["evaluation-suites", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/evaluations/", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useStudioDeployments() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["studio-deployments", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/studio/deployments", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}

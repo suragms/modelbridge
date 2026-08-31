@@ -244,6 +244,30 @@ MARKETPLACE_PUBLICATIONS = Counter(
     ["content_type"],
 )
 
+STUDIO_WORKFLOWS = Counter(
+    "modelbridge_studio_workflows_total",
+    "Studio workflow events",
+    ["status"],
+)
+
+PROMPT_EXECUTIONS = Counter(
+    "modelbridge_prompt_executions_total",
+    "Prompt test/playground executions",
+    ["status"],
+)
+
+EVALUATION_RUNS = Counter(
+    "modelbridge_evaluation_runs_total",
+    "Evaluation run outcomes",
+    ["status"],
+)
+
+STUDIO_DEPLOYMENTS = Counter(
+    "modelbridge_studio_deployments_total",
+    "Studio deployment pipeline events",
+    ["status"],
+)
+
 
 def record_cache_event(event: str, endpoint: str) -> None:
     """Record cache hit/miss/write/bypass/error."""
@@ -353,6 +377,22 @@ def record_marketplace_validation_failure() -> None:
 
 def record_marketplace_publication(*, content_type: str) -> None:
     MARKETPLACE_PUBLICATIONS.labels(content_type=content_type[:20]).inc()
+
+
+def record_studio_workflow(*, status: str) -> None:
+    STUDIO_WORKFLOWS.labels(status=status[:20]).inc()
+
+
+def record_prompt_execution(*, status: str) -> None:
+    PROMPT_EXECUTIONS.labels(status=status[:20]).inc()
+
+
+def record_evaluation_run(*, status: str) -> None:
+    EVALUATION_RUNS.labels(status=status[:20]).inc()
+
+
+def record_studio_deployment(*, status: str) -> None:
+    STUDIO_DEPLOYMENTS.labels(status=status[:20]).inc()
 
 
 def record_request(

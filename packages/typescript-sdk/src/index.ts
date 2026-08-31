@@ -440,4 +440,91 @@ export class ModelBridge {
       return parseResponse(res);
     },
   };
+
+  studio = {
+    overview: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/studio/overview`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    listWorkflows: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/studio/workflows`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    createWorkflow: async (body: Record<string, unknown>): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/studio/workflows`, {
+        method: "POST",
+        headers: headers(this.opts, true),
+        body: JSON.stringify(body),
+      });
+      return parseResponse(res);
+    },
+    publishWorkflow: async (workflowId: string): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/studio/workflows/${workflowId}/publish`, {
+        method: "POST",
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    listAgents: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/studio/agents`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    compare: async (body: Record<string, unknown>): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/studio/compare`, {
+        method: "POST",
+        headers: headers(this.opts, true),
+        body: JSON.stringify(body),
+      });
+      return parseResponse(res);
+    },
+    listDeployments: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/studio/deployments`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+  };
+
+  prompts = {
+    list: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/prompts/`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    create: async (body: Record<string, unknown>): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/prompts/`, {
+        method: "POST",
+        headers: headers(this.opts, true),
+        body: JSON.stringify(body),
+      });
+      return parseResponse(res);
+    },
+    test: async (promptId: string, body: Record<string, unknown>): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/prompts/${promptId}/test`, {
+        method: "POST",
+        headers: headers(this.opts, true),
+        body: JSON.stringify(body),
+      });
+      return parseResponse(res);
+    },
+  };
+
+  evaluations = {
+    list: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/evaluations/`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    listDatasets: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/evaluations/datasets`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    run: async (suiteId: string): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/evaluations/${suiteId}/run`, {
+        method: "POST",
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    getRun: async (runId: string): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/evaluation-runs/${runId}`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+  };
 }

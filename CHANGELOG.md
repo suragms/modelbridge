@@ -8,6 +8,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- Phase 16 AI Studio: visual workflow builder, agent builder, prompt studio with versioning, playground, model comparison, evaluation framework, deployment pipelines, studio APIs, dashboard (`/studio`), CLI/SDK, metrics, and `docs/ai-studio.md`
 - Phase 15 marketplace and community: verified publisher profiles, submission & review lifecycle, installation tracking, moderation/reviews, community contributor guide, `/marketplace` dashboard, CLI, and SDKs
 - Phase 14 advanced developer platform: event bus, HMAC-signed webhooks with SSRF protection, third-party integrations, event-driven automations, scoped API keys, developer portal, and CLI/SDK APIs
 - Phase 13 intelligence layer: operational analytics, provider/cost/capacity intelligence, anomaly detection, explainable recommendations, operations assistant, background jobs, dashboard, CLI/SDK, and `docs/intelligence.md`

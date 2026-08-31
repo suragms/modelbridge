@@ -46,6 +46,10 @@ from app.api.routes import (
     marketplace_router,
     publishers_router,
     marketplace_admin_router,
+    studio_router,
+    prompts_router,
+    evaluations_router,
+    evaluation_runs_router,
 )
 from app.config import get_settings, validate_production_settings
 from app.db.base import async_session_factory, engine
@@ -211,6 +215,10 @@ app.include_router(developer_router)
 app.include_router(marketplace_router)
 app.include_router(publishers_router)
 app.include_router(marketplace_admin_router)
+app.include_router(studio_router)
+app.include_router(prompts_router)
+app.include_router(evaluations_router)
+app.include_router(evaluation_runs_router)
 
 
 async def _check_database() -> bool:

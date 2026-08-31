@@ -123,6 +123,16 @@ Switching between AI providers means rewriting code, juggling API keys, and mana
   - Reviews, reporting, and moderation architecture
   - Marketplace dashboard (`/marketplace`) and contributor guide (`/community/contribute`)
   - CLI and SDK marketplace commands
+- **AI Studio (Phase 16)**
+  - Visual workflow builder with node validation and publish-to-engine compilation
+  - Agent builder connected to Phase 9 agent infrastructure
+  - Prompt management with immutable versioning and variable validation
+  - Prompt playground and multi-model comparison via real gateway pipeline
+  - Evaluation framework with datasets, objective scorers, and tracked runs
+  - Visual automation view built on Phase 14 automation engine
+  - Deployment pipelines with validation and approval gates
+  - Studio collaboration (comments, version history) and safe import/export
+  - AI Studio dashboard (`/studio`) and CLI/SDK support
 - **Developer Platform (Phase 6)**
   - Official CLI (`modelbridge`) — chat, embeddings, analytics, org management
   - Python SDK (`modelbridge-sdk`) with sync/async and streaming

@@ -132,6 +132,25 @@ from app.models.organization_settings import OrganizationSettings
 from app.models.provider import Provider, ProviderCredential
 from app.models.request_log import CostRecord, RequestLog, UsageRecord
 from app.models.routing import RoutingPolicy, RoutingRule
+from app.models.studio import (
+    EvaluationDataset,
+    EvaluationResult,
+    EvaluationRun,
+    EvaluationRunStatus,
+    EvaluationSuite,
+    PromptTemplate,
+    PromptVersion,
+    STUDIO_NODE_TYPES,
+    StudioAgentVersion,
+    StudioCollaborator,
+    StudioComment,
+    StudioDeployment,
+    StudioDeploymentStatus,
+    StudioResourceType,
+    StudioVersionHistory,
+    StudioVersionStatus,
+    StudioWorkflowVersion,
+)
 from app.models.user import User
 
 __all__ = [
@@ -262,4 +281,21 @@ __all__ = [
     "MarketplaceItemStatus",
     "MarketplaceVisibility",
     "MARKETPLACE_CATEGORIES",
+    "PromptTemplate",
+    "PromptVersion",
+    "EvaluationDataset",
+    "EvaluationSuite",
+    "EvaluationRun",
+    "EvaluationResult",
+    "StudioWorkflowVersion",
+    "StudioAgentVersion",
+    "StudioDeployment",
+    "StudioComment",
+    "StudioCollaborator",
+    "StudioVersionHistory",
+    "StudioResourceType",
+    "StudioVersionStatus",
+    "EvaluationRunStatus",
+    "StudioDeploymentStatus",
+    "STUDIO_NODE_TYPES",
 ]

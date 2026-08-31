@@ -24,6 +24,7 @@ import {
   Webhook,
   Plug,
   Zap,
+  Palette,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -41,6 +42,7 @@ const NAV_ITEMS = [
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/governance", label: "Governance", icon: ShieldCheck },
   { href: "/agents", label: "Agents", icon: Bot },
+  { href: "/studio", label: "AI Studio", icon: Palette },
   { href: "/workflows", label: "Workflows", icon: Workflow },
   { href: "/extensions", label: "Extensions", icon: Puzzle },
   { href: "/templates", label: "Templates", icon: Layers },
