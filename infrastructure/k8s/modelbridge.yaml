@@ -17,6 +17,8 @@ data:
   REQUEST_LOG_RETENTION_DAYS: "30"
   AUDIT_LOG_RETENTION_DAYS: "180"
   HEALTH_CHECK_INTERVAL_MINUTES: "5"
+  DEPLOYMENT_REGION: "local"
+  PLANE_TYPE: "unified"
 ---
 apiVersion: v1
 kind: Secret

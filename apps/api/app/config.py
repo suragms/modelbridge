@@ -73,6 +73,11 @@ class Settings(BaseSettings):
     embedding_cache_ttl_seconds: int = 86400
     semantic_cache_enabled: bool = False
 
+    # Cloud deployment
+    deployment_region: str = "local"
+    plane_type: str = "unified"
+    service_discovery_mode: str = "registry"
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
     @field_validator("cors_origins", mode="before")

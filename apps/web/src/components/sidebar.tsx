@@ -42,6 +42,7 @@ const NAV_ITEMS = [
   { href: "/templates", label: "Templates", icon: Layers },
   { href: "/enterprise", label: "Enterprise", icon: Building2 },
   { href: "/fleet", label: "Fleet", icon: Network },
+  { href: "/cloud", label: "Cloud", icon: Server },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 

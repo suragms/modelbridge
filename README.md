@@ -85,6 +85,17 @@ Switching between AI providers means rewriting code, juggling API keys, and mana
   - Fleet management with instance registration and heartbeats
   - Control-plane APIs for configuration and policy distribution
   - Enterprise and fleet dashboards
+- **Cloud & Global Scale**
+  - Control-plane / data-plane architecture (metadata and APIs)
+  - Region metadata and region-aware routing (with data residency filters)
+  - Managed instance lifecycle (provisioning through decommission)
+  - Service discovery registry and health aggregation
+  - Scoped configuration (global → org → workspace → project → environment)
+  - Multi-region configuration rollouts with verification
+  - Usage metering events and quota enforcement foundation
+  - Cloud operations dashboard (`/cloud`)
+  - CLI and SDK cloud/usage commands
+  - Kubernetes manifests with HPA readiness (validated structure)
 - **Developer Platform (Phase 6)**
   - Official CLI (`modelbridge`) — chat, embeddings, analytics, org management
   - Python SDK (`modelbridge-sdk`) with sync/async and streaming

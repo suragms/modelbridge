@@ -236,6 +236,40 @@ class EnterpriseAPI:
         return self._transport.request("GET", f"/fleet/{instance_id}", use_token=True)
 
 
+class CloudAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def health(self) -> dict:
+        return self._transport.request("GET", "/cloud/health", use_token=True)
+
+    def regions(self) -> list:
+        return self._transport.request("GET", "/cloud/regions", use_token=True)
+
+    def instances(self) -> list:
+        return self._transport.request("GET", "/cloud/instances", use_token=True)
+
+    def instance(self, instance_id: str) -> dict:
+        return self._transport.request("GET", f"/cloud/instances/{instance_id}", use_token=True)
+
+    def rollouts(self) -> list:
+        return self._transport.request("GET", "/cloud/rollouts", use_token=True)
+
+    def onboarding(self) -> dict:
+        return self._transport.request("GET", "/cloud/onboarding", use_token=True)
+
+
+class UsageAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def summary(self) -> dict:
+        return self._transport.request("GET", "/usage/summary", use_token=True)
+
+    def quotas(self) -> list:
+        return self._transport.request("GET", "/quotas", use_token=True)
+
+
 class ModelBridge:
     """Synchronous ModelBridge client."""
 
@@ -259,6 +293,8 @@ class ModelBridge:
         self.extensions = ExtensionsAPI(self._transport)
         self.templates = TemplatesAPI(self._transport)
         self.enterprise = EnterpriseAPI(self._transport)
+        self.cloud = CloudAPI(self._transport)
+        self.usage = UsageAPI(self._transport)
 
     def health(self) -> dict:
         return self._transport.request("GET", "/health", auth=False)

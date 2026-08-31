@@ -145,6 +145,36 @@ CONFIG_DEPLOYMENT_FAILURES = Counter(
     "Failed configuration deployments",
 )
 
+REGIONS_TOTAL = Counter(
+    "modelbridge_regions_total",
+    "Region lifecycle events",
+    ["event"],
+)
+
+REGION_HEALTH = Counter(
+    "modelbridge_region_health_status",
+    "Region status changes",
+    ["region", "status"],
+)
+
+FAILOVER_EVENTS = Counter(
+    "modelbridge_failover_events_total",
+    "Failover events",
+    ["verified"],
+)
+
+MANAGED_INSTANCES = Counter(
+    "modelbridge_managed_instances_total",
+    "Managed instance lifecycle events",
+    ["status"],
+)
+
+CONFIG_ROLLOUTS = Counter(
+    "modelbridge_configuration_rollouts_total",
+    "Configuration rollouts by status",
+    ["status"],
+)
+
 
 def record_cache_event(event: str, endpoint: str) -> None:
     """Record cache hit/miss/write/bypass/error."""
@@ -195,6 +225,23 @@ def record_config_deployment(status: str, *, failed: bool = False) -> None:
     CONFIG_DEPLOYMENTS.labels(status=status[:20]).inc()
     if failed:
         CONFIG_DEPLOYMENT_FAILURES.inc()
+
+
+def record_region_status(region: str, status: str) -> None:
+    bounded = region if len(region) < 40 else "other"
+    REGION_HEALTH.labels(region=bounded, status=status[:20]).inc()
+
+
+def record_failover_event(*, verified: bool = False) -> None:
+    FAILOVER_EVENTS.labels(verified="true" if verified else "false").inc()
+
+
+def record_managed_instance_lifecycle(status: str) -> None:
+    MANAGED_INSTANCES.labels(status=status[:20]).inc()
+
+
+def record_configuration_rollout(status: str) -> None:
+    CONFIG_ROLLOUTS.labels(status=status[:20]).inc()
 
 
 def record_request(

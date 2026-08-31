@@ -22,6 +22,8 @@ from app.models.provider import Provider, ProviderCredential
 from app.models.routing import RoutingPolicy
 from app.router.engine import CandidateModel, RoutingEngine
 from app.services.governance.engine import GovernanceRestrictions, candidate_allowed
+from app.services.cloud.region_filters import filter_targets_by_region
+from app.services.cloud.regions import RegionService
 from app.services.governance.pipeline import LOCAL_PROVIDER_TYPES
 
 
@@ -82,6 +84,8 @@ class RouteService:
         request_count: int | None = None,
         org_id: uuid.UUID | None = None,
         restrictions: GovernanceRestrictions | None = None,
+        region_code: str | None = None,
+        data_residency_policy: str | None = None,
     ) -> RoutePlan:
         """Build an ordered target chain for a request."""
         required = required_capabilities or {"chat"}
@@ -111,6 +115,20 @@ class RouteService:
                 if ok:
                     filtered.append(target)
             targets = filtered
+
+        residency = data_residency_policy or (
+            restrictions.data_residency_policy if restrictions else None
+        )
+        if residency or region_code:
+            region = None
+            if region_code:
+                region = await RegionService(self.db).get_by_code(region_code)
+            targets = filter_targets_by_region(
+                targets,
+                region=region,
+                data_residency_policy=residency,
+                region_service=RegionService(self.db),
+            )
 
         return RoutePlan(
             targets=targets,

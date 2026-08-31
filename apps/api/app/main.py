@@ -33,6 +33,9 @@ from app.api.routes import (
     enterprise_router,
     fleet_router,
     control_plane_router,
+    cloud_router,
+    usage_router,
+    quotas_router,
 )
 from app.config import get_settings, validate_production_settings
 from app.db.base import async_session_factory, engine
@@ -59,9 +62,25 @@ async def lifespan(app: FastAPI):
     try:
         async with async_session_factory() as db:
             await seed_official_packages(db)
+            from app.services.cloud.regions import RegionService
+            from app.services.cloud.discovery import ServiceDiscovery
+            from app.config import get_settings
+
+            await RegionService(db).seed_defaults()
+            settings = get_settings()
+            local_region = await RegionService(db).get_by_code(settings.deployment_region)
+            if local_region:
+                discovery = ServiceDiscovery(db)
+                await discovery.register(
+                    service_name="modelbridge-api",
+                    region_id=local_region.id,
+                    endpoint=await discovery.local_endpoint() or "http://localhost:8000",
+                    plane_type=settings.plane_type,
+                    capabilities=["chat", "embeddings", "agents", "workflows"],
+                )
             await db.commit()
     except Exception as e:
-        logger.warning("extension_seed_skipped", error=str(e))
+        logger.warning("startup_seed_skipped", error=str(e))
     yield
     await close_redis()
 
@@ -166,6 +185,9 @@ app.include_router(environments_router)
 app.include_router(enterprise_router)
 app.include_router(fleet_router)
 app.include_router(control_plane_router)
+app.include_router(cloud_router)
+app.include_router(usage_router)
+app.include_router(quotas_router)
 
 
 async def _check_database() -> bool:

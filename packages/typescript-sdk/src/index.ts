@@ -283,4 +283,46 @@ export class ModelBridge {
       return parseResponse(res);
     },
   };
+
+  cloud = {
+    health: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/cloud/health`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    regions: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/cloud/regions`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    instances: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/cloud/instances`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    instance: async (id: string): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/cloud/instances/${id}`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+  };
+
+  usage = {
+    summary: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/usage/summary`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    quotas: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/quotas`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+  };
 }

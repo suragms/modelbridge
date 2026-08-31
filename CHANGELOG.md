@@ -8,6 +8,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- Phase 12 cloud architecture: regions, managed instance lifecycle, service discovery, scoped configuration, rollouts, usage metering, quotas, incidents, cloud onboarding, global health APIs, `/cloud` dashboard, CLI/SDK commands, Kubernetes HPA config, and `docs/cloud.md`
 - Phase 11 enterprise collaboration: workspaces, projects, environments, config versioning, fleet management, control-plane APIs, dashboards, CLI, and SDKs
 - Phase 10 extension ecosystem: manifests, registry, lifecycle, permissions, templates, private registries, admin UI, CLI/SDK, metrics, and reference hello-tool extension
 - Phase 9 AI agent infrastructure: agent definitions, execution engine, tool registry, workflows, ARQ jobs, memory, observability, dashboard, CLI, and SDKs

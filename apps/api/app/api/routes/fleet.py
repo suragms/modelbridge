@@ -161,6 +161,9 @@ async def instance_heartbeat(
         capabilities=payload.capabilities,
         metrics=payload.metrics,
     )
+    from app.services.cloud.instances import CloudInstanceService
+
+    await CloudInstanceService(db).on_heartbeat(instance, payload.status)
     await db.commit()
     return {"status": "ok", "heartbeat_id": str(hb.id)}
 

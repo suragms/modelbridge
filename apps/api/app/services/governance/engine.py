@@ -90,6 +90,7 @@ class GovernanceRestrictions:
     blocked_capabilities: set[str] = field(default_factory=set)
     local_only: bool = False
     cloud_allowed: bool = True
+    data_residency_policy: str | None = None
 
 
 @dataclass

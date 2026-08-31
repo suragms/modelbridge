@@ -39,7 +39,10 @@ from app.services.capabilities import (
     raise_no_compatible_model,
 )
 from app.services.cost import CostService
-from app.services.metrics import record_request
+from app.models.cloud import UsageEventType
+from app.services.cloud.metering import MeteringService
+from app.services.cloud.quotas import QuotaExceeded, QuotaService
+from app.models.cloud import QuotaResource
 from app.services.params import normalize_chat_params
 from app.services.response_cache import (
     CachePolicy,
@@ -196,6 +199,18 @@ async def execute_chat(
     request_id = generate_request_id()
     start_time = time.time()
     policy = cache_policy if isinstance(cache_policy, CachePolicy) else parse_cache_policy(cache_policy)
+
+    if org_id:
+        quota_status = await QuotaService(db).check(org_id, QuotaResource.REQUESTS, increment=1)
+        if not quota_status["allowed"]:
+            raise HTTPException(
+                status_code=429,
+                detail={
+                    "code": "QUOTA_EXCEEDED",
+                    "message": f"Request quota exceeded ({quota_status['current']}/{quota_status['limit']})",
+                    "type": "quota_error",
+                },
+            )
 
     required = detect_chat_capabilities(
         payload.messages,
@@ -467,6 +482,21 @@ async def _execute_non_streaming(
             input_tokens=prompt_tokens,
             output_tokens=completion_tokens,
         )
+        if org_id:
+            metering = MeteringService(db)
+            await metering.record(
+                organization_id=org_id,
+                event_type=UsageEventType.REQUEST,
+                metadata={"provider": target.provider.name, "model": target.resolved_model, "status": "completed"},
+            )
+            total_tokens = prompt_tokens + completion_tokens
+            if total_tokens:
+                await metering.record(
+                    organization_id=org_id,
+                    event_type=UsageEventType.TOKENS,
+                    quantity=float(total_tokens),
+                    metadata={"provider": target.provider.name, "model": target.resolved_model},
+                )
 
         choices = []
         for choice_data in result.choices:
@@ -509,6 +539,19 @@ async def execute_embeddings(
     request_id = generate_request_id()
     start_time = time.time()
     policy = cache_policy if isinstance(cache_policy, CachePolicy) else parse_cache_policy(cache_policy)
+
+    if org_id:
+        quota_status = await QuotaService(db).check(org_id, QuotaResource.REQUESTS, increment=1)
+        if not quota_status["allowed"]:
+            raise HTTPException(
+                status_code=429,
+                detail={
+                    "code": "QUOTA_EXCEEDED",
+                    "message": f"Request quota exceeded ({quota_status['current']}/{quota_status['limit']})",
+                    "type": "quota_error",
+                },
+            )
+
     required = {"embeddings"}
     caps_str = "embeddings"
 
@@ -644,6 +687,20 @@ async def execute_embeddings(
         duration_seconds=latency / 1000,
         input_tokens=prompt_tokens,
     )
+    if org_id:
+        metering = MeteringService(db)
+        await metering.record(
+            organization_id=org_id,
+            event_type=UsageEventType.REQUEST,
+            metadata={"provider": target.provider.name, "model": target.resolved_model, "endpoint": "embeddings"},
+        )
+        if prompt_tokens:
+            await metering.record(
+                organization_id=org_id,
+                event_type=UsageEventType.TOKENS,
+                quantity=float(prompt_tokens),
+                metadata={"provider": target.provider.name, "model": target.resolved_model},
+            )
 
     response = EmbeddingResponse(
         data=[

@@ -850,3 +850,69 @@ export function useFleetInstance(id: string) {
     enabled: Boolean(token && orgId && id),
   });
 }
+
+export function useCloudHealth() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["cloud-health", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/cloud/health", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useCloudRegions() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["cloud-regions", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/cloud/regions", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useCloudInstances() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["cloud-instances", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/cloud/instances", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useCloudInstance(id: string) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["cloud-instance", orgId, id],
+    queryFn: () =>
+      api.get<Record<string, unknown>>(`/cloud/instances/${id}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId && id),
+  });
+}
+
+export function useCloudRollouts() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["cloud-rollouts", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/cloud/rollouts", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useUsageSummary() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["usage-summary", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/usage/summary", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}

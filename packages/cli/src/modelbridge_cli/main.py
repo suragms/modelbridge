@@ -632,5 +632,43 @@ def fleet_status(instance_id: str, json_out: bool = typer.Option(False, "--json"
     _print_json(data, json_out)
 
 
+cloud_app = typer.Typer(help="Cloud platform commands")
+cloud_regions_app = typer.Typer(help="Region commands")
+cloud_instances_app = typer.Typer(help="Managed instance commands")
+usage_app = typer.Typer(help="Usage metering commands")
+app.add_typer(cloud_app, name="cloud")
+cloud_app.add_typer(cloud_regions_app, name="regions")
+cloud_app.add_typer(cloud_instances_app, name="instances")
+app.add_typer(usage_app, name="usage")
+
+
+@cloud_app.command("health")
+def cloud_health(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/cloud/health", dashboard=True)
+    _print_json(data, json_out)
+
+
+@cloud_regions_app.command("list")
+def cloud_regions_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/cloud/regions", dashboard=True)
+    _print_json(data, json_out)
+
+
+@cloud_instances_app.command("list")
+def cloud_instances_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/cloud/instances", dashboard=True)
+    _print_json(data, json_out)
+
+
+@usage_app.command("summary")
+def usage_summary(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/usage/summary", dashboard=True)
+    _print_json(data, json_out)
+
+
 if __name__ == "__main__":
     app()
