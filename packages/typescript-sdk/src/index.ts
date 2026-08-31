@@ -325,4 +325,95 @@ export class ModelBridge {
       return parseResponse(res);
     },
   };
+
+  intelligence = {
+    overview: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/intelligence/overview`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    providers: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/intelligence/providers`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    costs: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/intelligence/costs`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    capacity: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/intelligence/capacity`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    anomalies: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/intelligence/anomalies`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    recommendations: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/intelligence/recommendations`, {
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    ask: async (question: string): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/operations-assistant/query`, {
+        method: "POST",
+        headers: headers(this.opts, true),
+        body: JSON.stringify({ question }),
+      });
+      return parseResponse(res);
+    },
+  };
+
+  events = {
+    list: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/events`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    catalog: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/events/catalog`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+  };
+
+  webhooks = {
+    list: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/webhooks`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    create: async (body: { name: string; url: string; event_types: string[] }): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/webhooks`, {
+        method: "POST",
+        headers: headers(this.opts, true),
+        body: JSON.stringify(body),
+      });
+      return parseResponse(res);
+    },
+  };
+
+  integrations = {
+    list: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/integrations`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+  };
+
+  automations = {
+    list: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/automations`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    templates: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/automations/templates`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+  };
 }

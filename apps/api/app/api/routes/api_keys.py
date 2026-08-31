@@ -96,9 +96,67 @@ async def list_api_keys(
             monthly_budget_usd=k.monthly_budget_usd,
             created_at=k.created_at,
             last_used_at=k.last_used_at,
+            last_used_ip=k.last_used_ip,
         )
         for k in keys
     ]
+
+
+@router.post("/{key_id}/rotate", response_model=APIKeyCreated, status_code=status.HTTP_201_CREATED)
+async def rotate_api_key(
+    key_id: uuid.UUID,
+    ctx: OrgContext = Depends(require_permission(Permission.KEYS_MANAGE)),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(APIKey).where(APIKey.id == key_id))
+    old_key = result.scalar_one_or_none()
+    if not old_key:
+        raise HTTPException(status_code=404, detail="API key not found")
+    ensure_same_org(old_key.organization_id, ctx)
+
+    raw_key = generate_api_key()
+    new_key = APIKey(
+        key_hash=hash_api_key(raw_key),
+        key_prefix=get_key_prefix(raw_key),
+        name=old_key.name,
+        scopes=old_key.scopes,
+        expires_at=old_key.expires_at,
+        monthly_token_limit=old_key.monthly_token_limit,
+        monthly_budget_usd=old_key.monthly_budget_usd,
+        user_id=old_key.user_id,
+        organization_id=old_key.organization_id,
+        created_by_id=ctx.user.id,
+        rotated_from_id=old_key.id,
+    )
+    old_key.is_active = False
+    db.add(new_key)
+    await db.flush()
+
+    audit = AuditService(db)
+    await audit.log(
+        "api_key.rotated", "api_key", str(new_key.id),
+        actor=ctx.user, organization_id=ctx.organization_id,
+        metadata={"old_key_id": str(old_key.id), "prefix": new_key.key_prefix},
+    )
+    from app.services.enterprise.activity import record_activity
+
+    await record_activity(
+        db,
+        organization_id=ctx.organization_id,
+        event_type="api_key.rotated",
+        resource_type="api_key",
+        resource_id=str(new_key.id),
+        actor_id=ctx.user.id,
+    )
+
+    return APIKeyCreated(
+        id=new_key.id,
+        key=raw_key,
+        key_prefix=new_key.key_prefix,
+        name=new_key.name,
+        scopes=new_key.effective_scopes(),
+        created_at=new_key.created_at,
+    )
 
 
 @router.delete("/{key_id}", status_code=status.HTTP_204_NO_CONTENT)

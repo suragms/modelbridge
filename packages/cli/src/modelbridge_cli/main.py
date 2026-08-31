@@ -670,5 +670,105 @@ def usage_summary(json_out: bool = typer.Option(False, "--json")):
     _print_json(data, json_out)
 
 
+intelligence_app = typer.Typer(help="Operational intelligence commands")
+app.add_typer(intelligence_app, name="intelligence")
+
+
+@intelligence_app.command("overview")
+def intelligence_overview(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/intelligence/overview", dashboard=True)
+    _print_json(data, json_out)
+
+
+@intelligence_app.command("providers")
+def intelligence_providers(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/intelligence/providers", dashboard=True)
+    _print_json(data, json_out)
+
+
+@intelligence_app.command("costs")
+def intelligence_costs(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/intelligence/costs", dashboard=True)
+    _print_json(data, json_out)
+
+
+@intelligence_app.command("anomalies")
+def intelligence_anomalies(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/intelligence/anomalies", dashboard=True)
+    _print_json(data, json_out)
+
+
+@intelligence_app.command("recommendations")
+def intelligence_recommendations(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/intelligence/recommendations", dashboard=True)
+    _print_json(data, json_out)
+
+
+events_app = typer.Typer(help="Platform event commands")
+webhooks_app = typer.Typer(help="Webhook commands")
+integrations_app = typer.Typer(help="Integration commands")
+automations_app = typer.Typer(help="Automation commands")
+app.add_typer(events_app, name="events")
+app.add_typer(webhooks_app, name="webhooks")
+app.add_typer(integrations_app, name="integrations")
+app.add_typer(automations_app, name="automations")
+
+
+@events_app.command("list")
+def events_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/events", dashboard=True)
+    _print_json(data, json_out)
+
+
+@events_app.command("catalog")
+def events_catalog(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/events/catalog", dashboard=True)
+    _print_json(data, json_out)
+
+
+@webhooks_app.command("list")
+def webhooks_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/webhooks", dashboard=True)
+    _print_json(data, json_out)
+
+
+@webhooks_app.command("create")
+def webhooks_create(
+    name: str = typer.Option(..., "--name"),
+    url: str = typer.Option(..., "--url"),
+    events: str = typer.Option(..., "--events", help="Comma-separated event types"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    data = client.post(
+        "/webhooks",
+        {"name": name, "url": url, "event_types": [e.strip() for e in events.split(",") if e.strip()]},
+        dashboard=True,
+    )
+    _print_json(data, json_out)
+
+
+@integrations_app.command("list")
+def integrations_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/integrations", dashboard=True)
+    _print_json(data, json_out)
+
+
+@automations_app.command("list")
+def automations_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/automations", dashboard=True)
+    _print_json(data, json_out)
+
+
 if __name__ == "__main__":
     app()

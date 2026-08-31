@@ -33,12 +33,12 @@ import type {
   PlaygroundCompareResponse,
 } from "./types";
 
-function useToken(): string | null {
+export function useToken(): string | null {
   const { token } = useAuth();
   return token;
 }
 
-function useOrgId(): string | null {
+export function useOrgId(): string | null {
   const { activeOrgId, user } = useAuth();
   return activeOrgId ?? user?.organization_id ?? null;
 }
@@ -913,6 +913,129 @@ export function useUsageSummary() {
     queryKey: ["usage-summary", orgId],
     queryFn: () =>
       api.get<Record<string, unknown>>("/usage/summary", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useIntelligenceOverview() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["intelligence-overview", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/intelligence/overview", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useIntelligenceProviders() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["intelligence-providers", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/intelligence/providers", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useIntelligenceCosts() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["intelligence-costs", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/intelligence/costs", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useIntelligenceCapacity() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["intelligence-capacity", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/intelligence/capacity", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useIntelligenceAnomalies() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["intelligence-anomalies", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/intelligence/anomalies", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useIntelligenceRecommendations() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["intelligence-recommendations", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/intelligence/recommendations", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+// ---- Developer Platform ----------------------------------------------------
+
+export function useDeveloperOverview() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["developer-overview", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/developer/overview", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useEventCatalog() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["event-catalog", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/events/catalog", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useWebhooks() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["webhooks", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/webhooks", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useIntegrations() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["integrations", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/integrations", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useAutomations() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["automations", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/automations", token ?? undefined, orgId ?? undefined),
     enabled: Boolean(token && orgId),
   });
 }

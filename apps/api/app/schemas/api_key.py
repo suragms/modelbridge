@@ -38,5 +38,6 @@ class APIKeyResponse(BaseModel):
     monthly_budget_usd: float | None = None
     created_at: datetime
     last_used_at: datetime | None
+    last_used_ip: str | None = None
 
     model_config = {"from_attributes": True}

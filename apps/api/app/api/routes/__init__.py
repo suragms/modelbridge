@@ -21,6 +21,15 @@ from app.api.routes.enterprise import router as enterprise_router
 from app.api.routes.cloud import router as cloud_router
 from app.api.routes.cloud import quotas_router
 from app.api.routes.cloud import usage_router
+from app.api.routes.intelligence import assistant_router as operations_assistant_router
+from app.api.routes.intelligence import router as intelligence_router
+from app.api.routes.platform import (
+    automations_router,
+    developer_router,
+    events_router,
+    integrations_router,
+    webhooks_router,
+)
 from app.api.routes.fleet import control_router as control_plane_router
 from app.api.routes.fleet import router as fleet_router
 from app.api.routes.projects import env_router as environments_router
@@ -52,6 +61,13 @@ __all__ = [
     "cloud_router",
     "usage_router",
     "quotas_router",
+    "intelligence_router",
+    "operations_assistant_router",
+    "events_router",
+    "webhooks_router",
+    "integrations_router",
+    "automations_router",
+    "developer_router",
     "fleet_router",
     "control_plane_router",
 ]

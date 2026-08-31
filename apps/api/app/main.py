@@ -36,6 +36,13 @@ from app.api.routes import (
     cloud_router,
     usage_router,
     quotas_router,
+    intelligence_router,
+    operations_assistant_router,
+    events_router,
+    webhooks_router,
+    integrations_router,
+    automations_router,
+    developer_router,
 )
 from app.config import get_settings, validate_production_settings
 from app.db.base import async_session_factory, engine
@@ -188,6 +195,13 @@ app.include_router(control_plane_router)
 app.include_router(cloud_router)
 app.include_router(usage_router)
 app.include_router(quotas_router)
+app.include_router(intelligence_router)
+app.include_router(operations_assistant_router)
+app.include_router(events_router)
+app.include_router(webhooks_router)
+app.include_router(integrations_router)
+app.include_router(automations_router)
+app.include_router(developer_router)
 
 
 async def _check_database() -> bool:

@@ -113,4 +113,12 @@ async def enforce_gateway_guards(
         hard_limit_percent=settings.budget_hard_limit_percent,
     )
 
+    if api_key:
+        from datetime import UTC, datetime
+
+        api_key.last_used_at = datetime.now(UTC)
+        client_ip = _client_ip(request)
+        if client_ip:
+            api_key.last_used_ip = client_ip[:45]
+
     return headers

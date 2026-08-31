@@ -270,6 +270,101 @@ class UsageAPI:
         return self._transport.request("GET", "/quotas", use_token=True)
 
 
+class IntelligenceAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def overview(self) -> dict:
+        return self._transport.request("GET", "/intelligence/overview", use_token=True)
+
+    def providers(self, **params: Any) -> dict:
+        return self._transport.request("GET", "/intelligence/providers", params=params, use_token=True)
+
+    def costs(self, **params: Any) -> dict:
+        return self._transport.request("GET", "/intelligence/costs", params=params, use_token=True)
+
+    def capacity(self) -> dict:
+        return self._transport.request("GET", "/intelligence/capacity", use_token=True)
+
+    def anomalies(self) -> list:
+        return self._transport.request("GET", "/intelligence/anomalies", use_token=True)
+
+    def recommendations(self, **params: Any) -> list:
+        return self._transport.request("GET", "/intelligence/recommendations", params=params, use_token=True)
+
+    def ask(self, question: str) -> dict:
+        return self._transport.request(
+            "POST", "/operations-assistant/query", json_body={"question": question}, use_token=True
+        )
+
+
+class EventsAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def list(self, **params: Any) -> list:
+        return self._transport.request("GET", "/events", params=params, use_token=True)
+
+    def catalog(self) -> list:
+        return self._transport.request("GET", "/events/catalog", use_token=True)
+
+    def get(self, event_id: str) -> dict:
+        return self._transport.request("GET", f"/events/{event_id}", use_token=True)
+
+
+class WebhooksAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def list(self) -> list:
+        return self._transport.request("GET", "/webhooks", use_token=True)
+
+    def create(self, *, name: str, url: str, event_types: list[str]) -> dict:
+        return self._transport.request(
+            "POST", "/webhooks", json_body={"name": name, "url": url, "event_types": event_types}, use_token=True
+        )
+
+    def deliveries(self, webhook_id: str) -> list:
+        return self._transport.request("GET", f"/webhooks/{webhook_id}/deliveries", use_token=True)
+
+
+class IntegrationsAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def list(self) -> list:
+        return self._transport.request("GET", "/integrations", use_token=True)
+
+    def create(self, *, provider: str, name: str, config: dict | None = None) -> dict:
+        return self._transport.request(
+            "POST", "/integrations", json_body={"provider": provider, "name": name, "config": config or {}}, use_token=True
+        )
+
+    def connect(self, integration_id: str, credential: str) -> dict:
+        return self._transport.request(
+            "POST", f"/integrations/{integration_id}/connect", json_body={"credential": credential}, use_token=True
+        )
+
+
+class AutomationsAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def list(self) -> list:
+        return self._transport.request("GET", "/automations", use_token=True)
+
+    def templates(self) -> list:
+        return self._transport.request("GET", "/automations/templates", use_token=True)
+
+    def execute(self, automation_id: str, *, force: bool = False, context: dict | None = None) -> dict:
+        return self._transport.request(
+            "POST",
+            f"/automations/{automation_id}/execute",
+            json_body={"force": force, "context": context or {}},
+            use_token=True,
+        )
+
+
 class ModelBridge:
     """Synchronous ModelBridge client."""
 
@@ -295,6 +390,11 @@ class ModelBridge:
         self.enterprise = EnterpriseAPI(self._transport)
         self.cloud = CloudAPI(self._transport)
         self.usage = UsageAPI(self._transport)
+        self.intelligence = IntelligenceAPI(self._transport)
+        self.events = EventsAPI(self._transport)
+        self.webhooks = WebhooksAPI(self._transport)
+        self.integrations = IntegrationsAPI(self._transport)
+        self.automations = AutomationsAPI(self._transport)
 
     def health(self) -> dict:
         return self._transport.request("GET", "/health", auth=False)

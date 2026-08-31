@@ -96,6 +96,23 @@ Switching between AI providers means rewriting code, juggling API keys, and mana
   - Cloud operations dashboard (`/cloud`)
   - CLI and SDK cloud/usage commands
   - Kubernetes manifests with HPA readiness (validated structure)
+- **AI Intelligence Layer**
+  - Operational intelligence from real request, cost, and health telemetry
+  - Provider performance analysis with explainable recommendations
+  - Cost intelligence (actual vs estimated) and trend forecasting
+  - Capacity analysis and anomaly detection (z-score)
+  - Recommendation lifecycle with human approval workflows
+  - Operations assistant for authorized NL queries
+  - Intelligence dashboard (`/intelligence`) and CLI/SDK support
+- **Developer Platform (Phase 14)**
+  - Event bus with catalog and organization-scoped persistence
+  - Webhooks with HMAC signing, SSRF protection, retries, and delivery tracking
+  - Integration framework with encrypted credentials
+  - GitHub integration (PAT verify, signed inbound webhooks, CI/CD normalization)
+  - Event-driven automations with templates and approval gates
+  - Scoped API keys with rotation and last-used tracking
+  - Developer portal (`/developers`), webhooks, integrations, and automations dashboards
+  - CLI and SDK support for events, webhooks, integrations, automations
 - **Developer Platform (Phase 6)**
   - Official CLI (`modelbridge`) — chat, embeddings, analytics, org management
   - Python SDK (`modelbridge-sdk`) with sync/async and streaming

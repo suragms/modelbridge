@@ -497,6 +497,23 @@ async def _execute_non_streaming(
                     quantity=float(total_tokens),
                     metadata={"provider": target.provider.name, "model": target.resolved_model},
                 )
+            try:
+                from app.services.platform.events import EventBus
+
+                await EventBus(db).emit(
+                    organization_id=org_id,
+                    event_type="request.completed",
+                    data={
+                        "request_id": request_id,
+                        "model": target.resolved_model,
+                        "provider": target.provider.name,
+                        "status": "completed",
+                        "latency_ms": int(latency),
+                    },
+                    idempotency_key=f"request:{request_id}",
+                )
+            except Exception:
+                pass
 
         choices = []
         for choice_data in result.choices:
@@ -701,6 +718,23 @@ async def execute_embeddings(
                 quantity=float(prompt_tokens),
                 metadata={"provider": target.provider.name, "model": target.resolved_model},
             )
+        try:
+            from app.services.platform.events import EventBus
+
+            await EventBus(db).emit(
+                organization_id=org_id,
+                event_type="request.completed",
+                data={
+                    "request_id": request_id,
+                    "model": target.resolved_model,
+                    "provider": target.provider.name,
+                    "status": "completed",
+                    "latency_ms": int(latency),
+                },
+                idempotency_key=f"request:{request_id}",
+            )
+        except Exception:
+            pass
 
     response = EmbeddingResponse(
         data=[

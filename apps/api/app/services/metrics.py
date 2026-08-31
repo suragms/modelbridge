@@ -175,6 +175,52 @@ CONFIG_ROLLOUTS = Counter(
     ["status"],
 )
 
+INTELLIGENCE_JOBS = Counter(
+    "modelbridge_intelligence_jobs_total",
+    "Intelligence analysis jobs",
+    ["status"],
+)
+
+ANOMALIES_DETECTED = Counter(
+    "modelbridge_anomalies_detected_total",
+    "Anomalies detected",
+    ["severity"],
+)
+
+RECOMMENDATIONS_CREATED = Counter(
+    "modelbridge_recommendations_created_total",
+    "Recommendations created",
+    ["category"],
+)
+
+RECOMMENDATIONS_APPROVED = Counter(
+    "modelbridge_recommendations_approved_total",
+    "Recommendation actions",
+    ["action"],
+)
+
+WEBHOOK_DELIVERIES = Counter(
+    "modelbridge_webhook_deliveries_total",
+    "Outbound webhook delivery outcomes",
+    ["status"],
+)
+
+WEBHOOK_RETRIES = Counter(
+    "modelbridge_webhook_retry_total",
+    "Webhook delivery retries scheduled",
+)
+
+WEBHOOK_DELIVERY_FAILURES = Counter(
+    "modelbridge_webhook_delivery_failures_total",
+    "Failed webhook deliveries (exhausted retries)",
+)
+
+INTEGRATION_REQUESTS = Counter(
+    "modelbridge_integration_requests_total",
+    "External integration API requests",
+    ["provider", "status"],
+)
+
 
 def record_cache_event(event: str, endpoint: str) -> None:
     """Record cache hit/miss/write/bypass/error."""
@@ -242,6 +288,36 @@ def record_managed_instance_lifecycle(status: str) -> None:
 
 def record_configuration_rollout(status: str) -> None:
     CONFIG_ROLLOUTS.labels(status=status[:20]).inc()
+
+
+def record_intelligence_job(status: str) -> None:
+    INTELLIGENCE_JOBS.labels(status=status[:20]).inc()
+
+
+def record_anomaly_detected(*, severity: str) -> None:
+    ANOMALIES_DETECTED.labels(severity=severity[:20]).inc()
+
+
+def record_recommendation_created(*, category: str) -> None:
+    RECOMMENDATIONS_CREATED.labels(category=category[:20]).inc()
+
+
+def record_recommendation_action(*, action: str) -> None:
+    RECOMMENDATIONS_APPROVED.labels(action=action[:20]).inc()
+
+
+def record_webhook_delivery(*, status: str) -> None:
+    WEBHOOK_DELIVERIES.labels(status=status[:20]).inc()
+    if status == "failed":
+        WEBHOOK_DELIVERY_FAILURES.inc()
+
+
+def record_webhook_retry() -> None:
+    WEBHOOK_RETRIES.inc()
+
+
+def record_integration_request(*, provider: str, status: str) -> None:
+    INTEGRATION_REQUESTS.labels(provider=provider[:20], status=status[:20]).inc()
 
 
 def record_request(

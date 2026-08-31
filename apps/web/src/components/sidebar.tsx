@@ -6,6 +6,7 @@ import {
   Activity,
   BarChart3,
   Boxes,
+  Code2,
   FlaskConical,
   GitBranch,
   KeyRound,
@@ -20,6 +21,9 @@ import {
   Server,
   ShieldCheck,
   Settings as SettingsIcon,
+  Webhook,
+  Plug,
+  Zap,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -43,6 +47,11 @@ const NAV_ITEMS = [
   { href: "/enterprise", label: "Enterprise", icon: Building2 },
   { href: "/fleet", label: "Fleet", icon: Network },
   { href: "/cloud", label: "Cloud", icon: Server },
+  { href: "/intelligence", label: "Intelligence", icon: Activity },
+  { href: "/developers", label: "Developers", icon: Code2 },
+  { href: "/webhooks", label: "Webhooks", icon: Webhook },
+  { href: "/integrations", label: "Integrations", icon: Plug },
+  { href: "/automations", label: "Automations", icon: Zap },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 

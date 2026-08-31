@@ -37,6 +37,13 @@ class Permission(StrEnum):
     CLOUD_MANAGE = "cloud.manage"
     USAGE_READ = "usage.read"
     QUOTA_MANAGE = "quota.manage"
+    INTELLIGENCE_READ = "intelligence.read"
+    INTELLIGENCE_MANAGE = "intelligence.manage"
+    INTELLIGENCE_APPROVE = "intelligence.approve"
+    EVENTS_READ = "events.read"
+    WEBHOOKS_MANAGE = "webhooks.manage"
+    INTEGRATIONS_MANAGE = "integrations.manage"
+    AUTOMATIONS_MANAGE = "automations.manage"
 
 
 ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
@@ -66,6 +73,13 @@ ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
         Permission.CLOUD_MANAGE,
         Permission.USAGE_READ,
         Permission.QUOTA_MANAGE,
+        Permission.INTELLIGENCE_READ,
+        Permission.INTELLIGENCE_MANAGE,
+        Permission.INTELLIGENCE_APPROVE,
+        Permission.EVENTS_READ,
+        Permission.WEBHOOKS_MANAGE,
+        Permission.INTEGRATIONS_MANAGE,
+        Permission.AUTOMATIONS_MANAGE,
     }),
     OrganizationRole.MEMBER: frozenset({
         Permission.PLAYGROUND_USE,
@@ -79,6 +93,8 @@ ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
         Permission.FLEET_READ,
         Permission.CLOUD_READ,
         Permission.USAGE_READ,
+        Permission.INTELLIGENCE_READ,
+        Permission.EVENTS_READ,
     }),
     OrganizationRole.VIEWER: frozenset({
         Permission.ANALYTICS_READ,
@@ -90,6 +106,8 @@ ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
         Permission.FLEET_READ,
         Permission.CLOUD_READ,
         Permission.USAGE_READ,
+        Permission.INTELLIGENCE_READ,
+        Permission.EVENTS_READ,
     }),
 }
 

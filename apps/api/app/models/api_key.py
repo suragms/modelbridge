@@ -18,7 +18,18 @@ DEFAULT_API_KEY_SCOPES = [
     "providers:read",
 ]
 
-ALL_API_KEY_SCOPES = frozenset(DEFAULT_API_KEY_SCOPES)
+PLATFORM_API_KEY_SCOPES = [
+    "requests:read",
+    "requests:write",
+    "workflows:read",
+    "workflows:execute",
+    "webhooks:manage",
+    "integrations:manage",
+    "automations:manage",
+    "events:read",
+]
+
+ALL_API_KEY_SCOPES = frozenset(DEFAULT_API_KEY_SCOPES + PLATFORM_API_KEY_SCOPES)
 
 
 class APIKey(Base):
@@ -37,6 +48,8 @@ class APIKey(Base):
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_used_ip: Mapped[str | None] = mapped_column(String(45))
+    rotated_from_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
 
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     organization_id: Mapped[uuid.UUID | None] = mapped_column(
