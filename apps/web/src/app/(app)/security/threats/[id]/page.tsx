@@ -54,7 +54,7 @@ const SAMPLE_DETAIL: Record<string, ThreatDetail> = {
   },
 };
 
-function getDetail(id: string): ThreatDetail | undefined {
+function getDetail(id: string): ThreatDetail {
   return SAMPLE_DETAIL[id] ?? {
     name: `Detected threat ${id}`,
     id: `THR-${id}`,
