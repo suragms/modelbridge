@@ -783,6 +783,51 @@ app.add_typer(prompts_app, name="prompts")
 app.add_typer(evaluations_app, name="evaluations")
 
 
+quality_app = typer.Typer(help="AI Quality Platform commands")
+app.add_typer(quality_app, name="quality")
+
+finops_app = typer.Typer(help="AI FinOps commands")
+app.add_typer(finops_app, name="finops")
+
+
+@finops_app.command("overview")
+def finops_overview(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/finops/overview", dashboard=True)
+    _print_json(data, json_out)
+
+
+@finops_app.command("costs")
+def finops_costs(
+    days: int = typer.Option(30, "--days"),
+    json_out: bool = typer.Option(False, "--json"),
+):
+    client = CLIClient()
+    data = client.get("/finops/costs", dashboard=True, params={"days": str(days)})
+    _print_json(data, json_out)
+
+
+@finops_app.command("budgets")
+def finops_budgets_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/finops/budgets", dashboard=True)
+    _print_json(data, json_out)
+
+
+@finops_app.command("forecast")
+def finops_forecast(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/finops/forecast", dashboard=True)
+    _print_json(data, json_out)
+
+
+@finops_app.command("optimize")
+def finops_optimize(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/finops/recommendations", dashboard=True)
+    _print_json(data, json_out)
+
+
 @studio_app.command("overview")
 def studio_overview(json_out: bool = typer.Option(False, "--json")):
     client = CLIClient()
@@ -827,10 +872,6 @@ def evaluations_datasets(json_out: bool = typer.Option(False, "--json")):
     client = CLIClient()
     data = client.get("/evaluations/datasets", dashboard=True)
     _print_json(data, json_out)
-
-
-quality_app = typer.Typer(help="AI Quality Platform commands")
-app.add_typer(quality_app, name="quality")
 
 
 @quality_app.command("overview")

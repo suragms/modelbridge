@@ -5,6 +5,13 @@ from arq.connections import RedisSettings
 
 from app.config import get_settings
 from app.jobs.agent_tasks import execute_agent_job, execute_workflow_job, run_scheduled_workflows
+from app.jobs.finops_tasks import (
+    run_finops_aggregation,
+    run_finops_anomaly_detection,
+    run_finops_budget_checks,
+    run_finops_forecasts,
+    run_finops_optimization_analysis,
+)
 from app.jobs.quality_tasks import (
     aggregate_quality_trends,
     run_production_sampling,
@@ -32,6 +39,11 @@ class WorkerSettings:
         run_scheduled_quality_pipelines,
         run_production_sampling,
         aggregate_quality_trends,
+        run_finops_aggregation,
+        run_finops_forecasts,
+        run_finops_anomaly_detection,
+        run_finops_budget_checks,
+        run_finops_optimization_analysis,
     ]
     redis_settings = RedisSettings.from_dsn(settings.redis_url)
     max_jobs = 10
@@ -45,4 +57,9 @@ class WorkerSettings:
         cron(run_production_sampling, hour={2}, minute=30),
         cron(aggregate_quality_trends, hour={5}, minute=0),
         cron(run_scheduled_quality_pipelines, hour={6}, minute=0),
+        cron(run_finops_aggregation, hour={1}, minute=0),
+        cron(run_finops_forecasts, hour={3}, minute=0),
+        cron(run_finops_anomaly_detection, hour={4}, minute=30),
+        cron(run_finops_budget_checks, hour={8}, minute=0),
+        cron(run_finops_optimization_analysis, hour={5}, minute=30),
     ]

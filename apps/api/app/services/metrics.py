@@ -291,6 +291,30 @@ QUALITY_ALERTS = Counter(
     ["status"],
 )
 
+FINOPS_COST_RECORDS = Counter(
+    "modelbridge_cost_records_total",
+    "FinOps cost record processing",
+    ["cost_type"],
+)
+
+FINOPS_BUDGET_THRESHOLDS = Counter(
+    "modelbridge_budget_threshold_events_total",
+    "Budget threshold events",
+    ["status"],
+)
+
+FINOPS_ANOMALIES = Counter(
+    "modelbridge_cost_anomalies_total",
+    "Cost anomalies detected",
+    ["status"],
+)
+
+FINOPS_OPTIMIZATIONS = Counter(
+    "modelbridge_optimization_recommendations_total",
+    "Optimization recommendations",
+    ["status"],
+)
+
 
 def record_cache_event(event: str, endpoint: str) -> None:
     """Record cache hit/miss/write/bypass/error."""
@@ -432,6 +456,18 @@ def record_quality_gate_failure() -> None:
 
 def record_quality_alert(*, status: str) -> None:
     QUALITY_ALERTS.labels(status=status[:20]).inc()
+
+
+def record_finops_budget_threshold(*, status: str) -> None:
+    FINOPS_BUDGET_THRESHOLDS.labels(status=status[:20]).inc()
+
+
+def record_finops_anomaly(*, status: str) -> None:
+    FINOPS_ANOMALIES.labels(status=status[:20]).inc()
+
+
+def record_finops_optimization(*, status: str) -> None:
+    FINOPS_OPTIMIZATIONS.labels(status=status[:20]).inc()
 
 
 def record_request(

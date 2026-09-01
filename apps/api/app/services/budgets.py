@@ -20,7 +20,7 @@ async def _monthly_spend(
 ) -> float:
     month_start = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     q = (
-        select(func.coalesce(func.sum(CostRecord.estimated_total_cost), 0.0))
+        select(func.coalesce(func.sum(CostRecord.total_cost), 0.0))
         .join(RequestLog, RequestLog.request_id == CostRecord.request_id)
         .where(RequestLog.created_at >= month_start)
     )

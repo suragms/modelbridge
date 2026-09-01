@@ -35,6 +35,11 @@ EVENT_CATALOG: dict[str, dict] = {
     "quality.regression.detected": {"description": "Quality regression detected", "category": "quality"},
     "quality.threshold.violated": {"description": "Quality threshold violated", "category": "quality"},
     "quality.gate.failed": {"description": "Deployment quality gate failed", "category": "quality"},
+    "budget.threshold.crossed": {"description": "Budget threshold crossed", "category": "finops"},
+    "budget.limit.reached": {"description": "Budget limit reached", "category": "finops"},
+    "cost.anomaly.detected": {"description": "Cost anomaly detected", "category": "finops"},
+    "forecast.overrun.predicted": {"description": "Forecast predicts budget overrun", "category": "finops"},
+    "optimization.recommendation.created": {"description": "Cost optimization recommendation created", "category": "finops"},
 }
 
 SAFE_PAYLOAD_KEYS = frozenset({

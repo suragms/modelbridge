@@ -51,6 +51,7 @@ from app.api.routes import (
     evaluations_router,
     evaluation_runs_router,
     quality_router,
+    finops_router,
 )
 from app.config import get_settings, validate_production_settings
 from app.db.base import async_session_factory, engine
@@ -221,6 +222,7 @@ app.include_router(prompts_router)
 app.include_router(evaluations_router)
 app.include_router(evaluation_runs_router)
 app.include_router(quality_router)
+app.include_router(finops_router)
 
 
 async def _check_database() -> bool:

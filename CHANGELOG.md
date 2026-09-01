@@ -8,6 +8,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- Phase 18 AI FinOps: cost tracking, budgets, forecasting, anomalies, optimization, showback, dashboard (`/finops`), CLI/SDK, and `docs/finops-platform.md`
 - Phase 17 AI Quality Platform: evaluation pipelines, LLM judges, regression testing, production sampling, quality gates, scorecards, alerts, dashboard (`/quality`), CLI/SDK, and `docs/quality-platform.md`
 - Phase 16 AI Studio: visual workflow builder, agent builder, prompt studio with versioning, playground, model comparison, evaluation framework, deployment pipelines, studio APIs, dashboard (`/studio`), CLI/SDK, metrics, and `docs/ai-studio.md`
 - Phase 15 marketplace and community: verified publisher profiles, submission & review lifecycle, installation tracking, moderation/reviews, community contributor guide, `/marketplace` dashboard, CLI, and SDKs

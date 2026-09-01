@@ -1335,3 +1335,82 @@ export function useQualityScorecards() {
     enabled: Boolean(token && orgId),
   });
 }
+
+// ---- FinOps -----------------------------------------------------------------
+
+export function useFinopsOverview() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["finops-overview", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/finops/overview", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useFinopsCosts(days = 30) {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["finops-costs", orgId, days],
+    queryFn: () =>
+      api.get<Record<string, unknown>>(`/finops/costs?days=${days}`, token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useFinopsBudgets() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["finops-budgets", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/finops/budgets", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useFinopsForecast() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["finops-forecast", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/finops/forecast", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useFinopsAnomalies() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["finops-anomalies", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/finops/anomalies", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useFinopsRecommendations() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["finops-recommendations", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/finops/recommendations", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useFinopsModelComparison() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["finops-models", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/finops/models/comparison", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}

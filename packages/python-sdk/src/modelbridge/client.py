@@ -460,6 +460,35 @@ class QualityAPI:
         return self._transport.request("POST", "/quality/gates", json_body=body, use_token=True)
 
 
+class FinOpsAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def overview(self) -> dict:
+        return self._transport.request("GET", "/finops/overview", use_token=True)
+
+    def costs(self, **params) -> dict:
+        return self._transport.request("GET", "/finops/costs", params=params, use_token=True)
+
+    def list_budgets(self) -> list:
+        return self._transport.request("GET", "/finops/budgets", use_token=True)
+
+    def create_budget(self, body: dict) -> dict:
+        return self._transport.request("POST", "/finops/budgets", json_body=body, use_token=True)
+
+    def forecast(self, **params) -> dict:
+        return self._transport.request("GET", "/finops/forecast", params=params, use_token=True)
+
+    def list_anomalies(self) -> list:
+        return self._transport.request("GET", "/finops/anomalies", use_token=True)
+
+    def list_recommendations(self) -> list:
+        return self._transport.request("GET", "/finops/recommendations", use_token=True)
+
+    def model_comparison(self, **params) -> list:
+        return self._transport.request("GET", "/finops/models/comparison", params=params, use_token=True)
+
+
 class MarketplaceAPI:
     def __init__(self, transport: HTTPTransport):
         self._transport = transport
@@ -529,6 +558,7 @@ class ModelBridge:
         self.prompts = PromptsAPI(self._transport)
         self.evaluations = EvaluationsAPI(self._transport)
         self.quality = QualityAPI(self._transport)
+        self.finops = FinOpsAPI(self._transport)
 
     def health(self) -> dict:
         return self._transport.request("GET", "/health", auth=False)

@@ -50,6 +50,8 @@ class Permission(StrEnum):
     EVALUATIONS_MANAGE = "evaluations.manage"
     QUALITY_READ = "quality.read"
     QUALITY_MANAGE = "quality.manage"
+    FINOPS_READ = "finops.read"
+    FINOPS_MANAGE = "finops.manage"
     MARKETPLACE_READ = "marketplace.read"
     MARKETPLACE_PUBLISH = "marketplace.publish"
     MARKETPLACE_ADMIN = "marketplace.admin"
@@ -98,6 +100,8 @@ ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
         Permission.EVALUATIONS_MANAGE,
         Permission.QUALITY_READ,
         Permission.QUALITY_MANAGE,
+        Permission.FINOPS_READ,
+        Permission.FINOPS_MANAGE,
     }),
     OrganizationRole.MEMBER: frozenset({
         Permission.PLAYGROUND_USE,
@@ -116,6 +120,7 @@ ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
         Permission.MARKETPLACE_READ,
         Permission.STUDIO_READ,
         Permission.QUALITY_READ,
+        Permission.FINOPS_READ,
     }),
     OrganizationRole.VIEWER: frozenset({
         Permission.ANALYTICS_READ,
@@ -132,6 +137,7 @@ ROLE_PERMISSIONS: dict[OrganizationRole, frozenset[Permission]] = {
         Permission.MARKETPLACE_READ,
         Permission.STUDIO_READ,
         Permission.QUALITY_READ,
+        Permission.FINOPS_READ,
     }),
 }
 

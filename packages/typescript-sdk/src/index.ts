@@ -557,4 +557,36 @@ export class ModelBridge {
       return parseResponse(res);
     },
   };
+
+  finops = {
+    overview: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/finops/overview`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    costs: async (params?: Record<string, string>): Promise<unknown> => {
+      const qs = params ? `?${new URLSearchParams(params)}` : "";
+      const res = await fetch(`${this.baseURL}/finops/costs${qs}`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    listBudgets: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/finops/budgets`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    forecast: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/finops/forecast`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    listAnomalies: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/finops/anomalies`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    listRecommendations: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/finops/recommendations`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    modelComparison: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/finops/models/comparison`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+  };
 }

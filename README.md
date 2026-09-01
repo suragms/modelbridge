@@ -145,6 +145,16 @@ Switching between AI providers means rewriting code, juggling API keys, and mana
   - Quality gates integrated with deployment pipelines
   - Quality alerts, incidents, and Phase 14 event integration
   - Quality dashboard (`/quality`) and CLI/SDK support
+- **AI FinOps & Cost Intelligence (Phase 18)**
+  - Unified cost tracking with labeled cost types (actual, estimated, configured, unknown)
+  - Versioned provider pricing and reproducible cost calculations
+  - Cost attribution, tagging, and showback/chargeback reports
+  - Scoped budgets with threshold events and spending limits
+  - Cost forecasting with methodology and documented limitations
+  - Cost anomaly detection with evidence
+  - Model cost comparison and explainable optimization recommendations
+  - Savings tracking (projected vs measured)
+  - FinOps dashboard (`/finops`) and CLI/SDK support
 - **Developer Platform (Phase 6)**
   - Official CLI (`modelbridge`) — chat, embeddings, analytics, org management
   - Python SDK (`modelbridge-sdk`) with sync/async and streaming
