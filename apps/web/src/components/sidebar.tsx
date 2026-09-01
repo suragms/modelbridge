@@ -30,6 +30,15 @@ import {
   Shield,
   DollarSign,
   Search,
+  ShieldAlert,
+  Crosshair,
+  BellRing,
+  Flame,
+  AlertTriangle,
+  MessageSquareWarning,
+  DatabaseZap,
+  FileCheck,
+  FileBadge,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -75,6 +84,21 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/finops", label: "FinOps", icon: DollarSign },
       { href: "/workflows", label: "Workflows", icon: Workflow },
       { href: "/governance", label: "Governance", icon: ShieldCheck },
+    ],
+  },
+  {
+    label: "Security",
+    items: [
+      { href: "/security", label: "Overview", icon: ShieldAlert },
+      { href: "/security/threats", label: "Threats", icon: Crosshair },
+      { href: "/security/alerts", label: "Alerts", icon: BellRing },
+      { href: "/security/incidents", label: "Incidents", icon: Flame },
+      { href: "/security/risks", label: "AI Risks", icon: AlertTriangle },
+      { href: "/security/prompts", label: "Prompt Security", icon: MessageSquareWarning },
+      { href: "/security/data", label: "Data Protection", icon: DatabaseZap },
+      { href: "/security/policies", label: "Policies", icon: FileCheck },
+      { href: "/security/analytics", label: "Analytics", icon: BarChart3 },
+      { href: "/security/trust", label: "Trust Center", icon: FileBadge },
     ],
   },
   {
