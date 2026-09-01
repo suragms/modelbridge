@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const apiOrigin = process.env.MODELBRIDGE_API_URL ?? "http://localhost:8001";
+const apiOrigin = process.env.MODELBRIDGE_API_URL ?? "http://localhost:8010";
 
 const nextConfig = {
   output: "standalone",

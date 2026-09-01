@@ -32,13 +32,13 @@ async def register(payload: UserCreate, db: AsyncSession = Depends(get_db)):
         email=payload.email,
         hashed_password=hash_password(payload.password),
         full_name=payload.full_name,
-        role=UserRole.OWNER,
+        role=UserRole.OWNER.value,
         organization_id=org.id,
     )
     db.add(user)
     await db.flush()
 
-    db.add(OrganizationMember(organization_id=org.id, user_id=user.id, role=OrganizationRole.OWNER))
+    db.add(OrganizationMember(organization_id=org.id, user_id=user.id, role=OrganizationRole.OWNER.value))
     db.add(OrganizationSettings(organization_id=org.id))
     await db.flush()
 
