@@ -428,6 +428,38 @@ class EvaluationsAPI:
         return self._transport.request("GET", f"/evaluation-runs/{run_id}", use_token=True)
 
 
+class QualityAPI:
+    def __init__(self, transport: HTTPTransport):
+        self._transport = transport
+
+    def overview(self) -> dict:
+        return self._transport.request("GET", "/quality/overview", use_token=True)
+
+    def list_pipelines(self) -> list:
+        return self._transport.request("GET", "/quality/pipelines", use_token=True)
+
+    def create_pipeline(self, body: dict) -> dict:
+        return self._transport.request("POST", "/quality/pipelines", json_body=body, use_token=True)
+
+    def run_pipeline(self, pipeline_id: str) -> dict:
+        return self._transport.request("POST", f"/quality/pipelines/{pipeline_id}/run", use_token=True)
+
+    def list_regressions(self) -> list:
+        return self._transport.request("GET", "/quality/regressions", use_token=True)
+
+    def compare_regressions(self, body: dict) -> dict:
+        return self._transport.request("POST", "/quality/regressions/compare", json_body=body, use_token=True)
+
+    def list_scorecards(self) -> list:
+        return self._transport.request("GET", "/quality/scorecards", use_token=True)
+
+    def list_gates(self) -> list:
+        return self._transport.request("GET", "/quality/gates", use_token=True)
+
+    def create_gate(self, body: dict) -> dict:
+        return self._transport.request("POST", "/quality/gates", json_body=body, use_token=True)
+
+
 class MarketplaceAPI:
     def __init__(self, transport: HTTPTransport):
         self._transport = transport
@@ -496,6 +528,7 @@ class ModelBridge:
         self.studio = StudioAPI(self._transport)
         self.prompts = PromptsAPI(self._transport)
         self.evaluations = EvaluationsAPI(self._transport)
+        self.quality = QualityAPI(self._transport)
 
     def health(self) -> dict:
         return self._transport.request("GET", "/health", auth=False)

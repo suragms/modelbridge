@@ -829,6 +829,38 @@ def evaluations_datasets(json_out: bool = typer.Option(False, "--json")):
     _print_json(data, json_out)
 
 
+quality_app = typer.Typer(help="AI Quality Platform commands")
+app.add_typer(quality_app, name="quality")
+
+
+@quality_app.command("overview")
+def quality_overview(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/quality/overview", dashboard=True)
+    _print_json(data, json_out)
+
+
+@quality_app.command("pipelines")
+def quality_pipelines_list(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/quality/pipelines", dashboard=True)
+    _print_json(data, json_out)
+
+
+@quality_app.command("run")
+def quality_run(pipeline_id: str, json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.post(f"/quality/pipelines/{pipeline_id}/run", {}, dashboard=True)
+    _print_json(data, json_out)
+
+
+@quality_app.command("regressions")
+def quality_regressions(json_out: bool = typer.Option(False, "--json")):
+    client = CLIClient()
+    data = client.get("/quality/regressions", dashboard=True)
+    _print_json(data, json_out)
+
+
 @marketplace_app.command("search")
 def marketplace_search(
     query: str = typer.Option(None, "--query", "-q"),

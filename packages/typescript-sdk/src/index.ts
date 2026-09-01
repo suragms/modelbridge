@@ -527,4 +527,34 @@ export class ModelBridge {
       return parseResponse(res);
     },
   };
+
+  quality = {
+    overview: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/quality/overview`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    listPipelines: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/quality/pipelines`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    runPipeline: async (pipelineId: string): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/quality/pipelines/${pipelineId}/run`, {
+        method: "POST",
+        headers: headers(this.opts, true),
+      });
+      return parseResponse(res);
+    },
+    listRegressions: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/quality/regressions`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    listScorecards: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/quality/scorecards`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+    listGates: async (): Promise<unknown> => {
+      const res = await fetch(`${this.baseURL}/quality/gates`, { headers: headers(this.opts, true) });
+      return parseResponse(res);
+    },
+  };
 }

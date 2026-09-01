@@ -25,6 +25,7 @@ import {
   Plug,
   Zap,
   Palette,
+  Shield,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ const NAV_ITEMS = [
   { href: "/governance", label: "Governance", icon: ShieldCheck },
   { href: "/agents", label: "Agents", icon: Bot },
   { href: "/studio", label: "AI Studio", icon: Palette },
+  { href: "/quality", label: "Quality", icon: Shield },
   { href: "/workflows", label: "Workflows", icon: Workflow },
   { href: "/extensions", label: "Extensions", icon: Puzzle },
   { href: "/templates", label: "Templates", icon: Layers },

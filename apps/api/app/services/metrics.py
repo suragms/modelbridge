@@ -268,6 +268,29 @@ STUDIO_DEPLOYMENTS = Counter(
     ["status"],
 )
 
+QUALITY_EVALUATIONS = Counter(
+    "modelbridge_quality_evaluations_total",
+    "Quality platform evaluation runs",
+    ["status"],
+)
+
+QUALITY_REGRESSIONS = Counter(
+    "modelbridge_quality_regressions_total",
+    "Quality regression comparisons",
+    ["status"],
+)
+
+QUALITY_GATE_FAILURES = Counter(
+    "modelbridge_quality_gate_failures_total",
+    "Quality gate failures",
+)
+
+QUALITY_ALERTS = Counter(
+    "modelbridge_quality_alerts_total",
+    "Quality alerts",
+    ["status"],
+)
+
 
 def record_cache_event(event: str, endpoint: str) -> None:
     """Record cache hit/miss/write/bypass/error."""
@@ -393,6 +416,22 @@ def record_evaluation_run(*, status: str) -> None:
 
 def record_studio_deployment(*, status: str) -> None:
     STUDIO_DEPLOYMENTS.labels(status=status[:20]).inc()
+
+
+def record_quality_evaluation(*, status: str) -> None:
+    QUALITY_EVALUATIONS.labels(status=status[:20]).inc()
+
+
+def record_quality_regression(*, status: str) -> None:
+    QUALITY_REGRESSIONS.labels(status=status[:20]).inc()
+
+
+def record_quality_gate_failure() -> None:
+    QUALITY_GATE_FAILURES.inc()
+
+
+def record_quality_alert(*, status: str) -> None:
+    QUALITY_ALERTS.labels(status=status[:20]).inc()
 
 
 def record_request(

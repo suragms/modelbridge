@@ -1267,3 +1267,71 @@ export function useStudioDeployments() {
     enabled: Boolean(token && orgId),
   });
 }
+
+// ---- Quality Platform -------------------------------------------------------
+
+export function useQualityOverview() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["quality-overview", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/quality/overview", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useQualityPipelines() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["quality-pipelines", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/quality/pipelines", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useQualityRegressions() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["quality-regressions", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/quality/regressions", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useQualityModelComparison() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["quality-models", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/quality/models/comparison", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useQualityProduction() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["quality-production", orgId],
+    queryFn: () =>
+      api.get<Record<string, unknown>>("/quality/production", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}
+
+export function useQualityScorecards() {
+  const token = useToken();
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["quality-scorecards", orgId],
+    queryFn: () =>
+      api.get<Array<Record<string, unknown>>>("/quality/scorecards", token ?? undefined, orgId ?? undefined),
+    enabled: Boolean(token && orgId),
+  });
+}

@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.enterprise import Environment, EnvironmentKind
@@ -41,7 +42,13 @@ class DeploymentService:
         await self.db.flush()
         return deployment
 
-    async def validate(self, deployment: StudioDeployment) -> StudioDeployment:
+    async def validate(
+        self,
+        deployment: StudioDeployment,
+        *,
+        org_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+    ) -> StudioDeployment:
         deployment.status = StudioDeploymentStatus.VALIDATING
         state = deployment.pipeline_state or {}
         steps = list(state.get("steps") or [])
@@ -49,7 +56,61 @@ class DeploymentService:
         deployment.pipeline_state = {**state, "steps": steps, "validation": "passed"}
         deployment.status = StudioDeploymentStatus.TESTING
         await self.db.flush()
+
+        if org_id and user_id:
+            await self._run_quality_gates(deployment, org_id, user_id)
+
         return deployment
+
+    async def _run_quality_gates(
+        self,
+        deployment: StudioDeployment,
+        org_id: uuid.UUID,
+        user_id: uuid.UUID,
+    ) -> None:
+        from app.models.quality import QualityGate
+        from app.services.quality.gates import GateService
+        from app.services.quality.pipelines import PipelineService
+
+        gates_result = await self.db.execute(
+            select(QualityGate).where(
+                QualityGate.organization_id == org_id,
+                QualityGate.enabled.is_(True),
+            )
+        )
+        gates = list(gates_result.scalars().all())
+        if not gates:
+            return
+
+        pipeline_svc = PipelineService(self.db)
+        run_pass_rate = None
+        gate = gates[0]
+        pipeline = await pipeline_svc.get_pipeline(org_id, gate.pipeline_id)
+        if pipeline:
+            try:
+                run = await pipeline_svc.run(
+                    pipeline, org_id=org_id, user_id=user_id, trigger="deployment"
+                )
+                run_pass_rate = run.pass_rate
+            except ValueError:
+                deployment.status = StudioDeploymentStatus.FAILED
+                state = deployment.pipeline_state or {}
+                deployment.pipeline_state = {**state, "quality_error": "Pipeline run failed"}
+                await self.db.flush()
+                return
+
+        result = await GateService(self.db).evaluate_for_deployment(
+            org_id=org_id,
+            deployment=deployment,
+            run_pass_rate=run_pass_rate,
+            pipeline_service=pipeline_svc,
+            user_id=user_id,
+        )
+        if not result.get("passed") and deployment.status == StudioDeploymentStatus.REJECTED:
+            return
+        state = deployment.pipeline_state or {}
+        deployment.pipeline_state = {**state, "quality_checks": result.get("checks", [])}
+        await self.db.flush()
 
     async def request_approval(self, deployment: StudioDeployment) -> StudioDeployment:
         env = await self.db.get(Environment, deployment.environment_id) if deployment.environment_id else None

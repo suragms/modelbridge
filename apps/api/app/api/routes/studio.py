@@ -23,6 +23,7 @@ from app.models.studio import (
     StudioAgentVersion,
     StudioComment,
     StudioDeployment,
+    StudioDeploymentStatus,
     StudioVersionHistory,
     StudioVersionStatus,
     StudioWorkflowVersion,
@@ -585,7 +586,9 @@ async def validate_deployment(
     dep = await DeploymentService(db).get(ctx.organization_id, deployment_id)
     if not dep:
         raise HTTPException(status_code=404, detail="Deployment not found")
-    dep = await DeploymentService(db).validate(dep)
+    dep = await DeploymentService(db).validate(
+        dep, org_id=ctx.organization_id, user_id=ctx.user.id
+    )
     await db.commit()
     return {"id": str(dep.id), "status": dep.status}
 
@@ -600,6 +603,8 @@ async def approve_deployment(
     dep = await svc.get(ctx.organization_id, deployment_id)
     if not dep:
         raise HTTPException(status_code=404, detail="Deployment not found")
+    if dep.status == StudioDeploymentStatus.REJECTED:
+        raise HTTPException(status_code=400, detail="Deployment rejected by quality gate")
     dep = await svc.approve(dep, ctx.user.id)
     dep = await svc.deploy(dep)
     record_studio_deployment(status="deployed")

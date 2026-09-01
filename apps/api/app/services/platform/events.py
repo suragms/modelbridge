@@ -30,12 +30,18 @@ EVENT_CATALOG: dict[str, dict] = {
     "webhook.delivery.failed": {"description": "Outbound webhook delivery failed", "category": "webhook"},
     "integration.connected": {"description": "External integration connected", "category": "integration"},
     "automation.triggered": {"description": "Automation rule triggered", "category": "automation"},
+    "evaluation.completed": {"description": "Quality evaluation run completed", "category": "quality"},
+    "evaluation.failed": {"description": "Quality evaluation run failed thresholds", "category": "quality"},
+    "quality.regression.detected": {"description": "Quality regression detected", "category": "quality"},
+    "quality.threshold.violated": {"description": "Quality threshold violated", "category": "quality"},
+    "quality.gate.failed": {"description": "Deployment quality gate failed", "category": "quality"},
 }
 
 SAFE_PAYLOAD_KEYS = frozenset({
     "request_id", "model", "provider", "status", "agent_id", "workflow_id",
     "execution_id", "deployment_id", "severity", "recommendation_id", "anomaly_id",
     "integration_id", "automation_id", "error_code", "latency_ms",
+    "gate_id", "suite_id", "pass_rate", "run_id",
 })
 
 

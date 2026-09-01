@@ -133,6 +133,18 @@ Switching between AI providers means rewriting code, juggling API keys, and mana
   - Deployment pipelines with validation and approval gates
   - Studio collaboration (comments, version history) and safe import/export
   - AI Studio dashboard (`/studio`) and CLI/SDK support
+- **AI Quality Engineering (Phase 17)**
+  - Evaluation pipelines with versioned evaluator configurations
+  - Evaluator types: rule, regex, structured output, custom, LLM judge
+  - LLM-as-a-judge with explicit methodology and limitations
+  - Regression testing (baseline vs candidate) and prompt regression detection
+  - Model quality comparison from actual evaluation runs
+  - Production sampling with redaction and retention policies
+  - Safety, bias, and hallucination evaluation architectures
+  - Explainable reliability and quality scorecards
+  - Quality gates integrated with deployment pipelines
+  - Quality alerts, incidents, and Phase 14 event integration
+  - Quality dashboard (`/quality`) and CLI/SDK support
 - **Developer Platform (Phase 6)**
   - Official CLI (`modelbridge`) — chat, embeddings, analytics, org management
   - Python SDK (`modelbridge-sdk`) with sync/async and streaming

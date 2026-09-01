@@ -151,6 +151,25 @@ from app.models.studio import (
     StudioVersionStatus,
     StudioWorkflowVersion,
 )
+from app.models.quality import (
+    EvaluatorType,
+    PipelineStatus,
+    QualityAlert,
+    QualityAlertStatus,
+    QualityEvaluationRun,
+    QualityGate,
+    QualityIncident,
+    QualityIncidentStatus,
+    QualityPipeline,
+    QualityPipelineVersion,
+    QualityProductionConfig,
+    QualityProductionSample,
+    QualityRegressionComparison,
+    QualityRunStatus,
+    QualityScorecard,
+    QualityTrendPoint,
+    RegressionStatus,
+)
 from app.models.user import User
 
 __all__ = [
@@ -298,4 +317,21 @@ __all__ = [
     "EvaluationRunStatus",
     "StudioDeploymentStatus",
     "STUDIO_NODE_TYPES",
+    "EvaluatorType",
+    "PipelineStatus",
+    "QualityPipeline",
+    "QualityPipelineVersion",
+    "QualityEvaluationRun",
+    "QualityRunStatus",
+    "QualityRegressionComparison",
+    "RegressionStatus",
+    "QualityGate",
+    "QualityAlert",
+    "QualityAlertStatus",
+    "QualityIncident",
+    "QualityIncidentStatus",
+    "QualityScorecard",
+    "QualityTrendPoint",
+    "QualityProductionConfig",
+    "QualityProductionSample",
 ]
